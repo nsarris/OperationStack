@@ -11,24 +11,34 @@ namespace DomainObjects.Operations
         private ResultDispatcher<T> resultDispatcher = new ResultDispatcher<T>();
         public T Result { get; set; }
 
-        public BlockResult<T> Break()
+        public BlockResult<T> Break(bool success)
         {
-            return resultDispatcher.Break();
+            return resultDispatcher.Break(success);
         }
 
-        public BlockResult<T> End()
+        public BlockResult<T> End(bool success)
         {
-            return resultDispatcher.End();
+            return resultDispatcher.End(success);
         }
 
-        public BlockResult<T> End(object overrideResult)
+        public BlockResult<T> End(bool success,object overrideResult)
         {
-            return resultDispatcher.End(overrideResult);
+            return resultDispatcher.End(success,overrideResult);
+        }
+
+        public BlockResult<T> Goto(string tag, bool success = true)
+        {
+            return resultDispatcher.Goto(tag,success);
         }
 
         public BlockResult<T> Goto(string tag)
         {
             return resultDispatcher.Goto(tag);
+        }
+
+        public BlockResult<T> Goto(string tag, object overrideInput, bool success = true)
+        {
+            return resultDispatcher.Goto(tag, overrideInput, success);
         }
 
         public BlockResult<T> Goto(string tag, object overrideInput)
@@ -51,9 +61,19 @@ namespace DomainObjects.Operations
             return resultDispatcher.Restart();
         }
 
+        public BlockResult<T> Return(T result, bool success = true)
+        {
+            return resultDispatcher.Return(result, success);
+        }
+
         public BlockResult<T> Return(T result)
         {
             return resultDispatcher.Return(result);
+        }
+
+        public BlockResult<T> Skip(int i, bool success = true)
+        {
+            return resultDispatcher.Skip(i, success);
         }
 
         public BlockResult<T> Skip(int i)
@@ -61,9 +81,19 @@ namespace DomainObjects.Operations
             return resultDispatcher.Skip(i);
         }
 
+        public BlockResult<T> Skip(int i, object overrideInput, bool success = true)
+        {
+            return resultDispatcher.Skip(i, overrideInput,success);
+        }
+
         public BlockResult<T> Skip(int i, object overrideInput)
         {
             return resultDispatcher.Skip(i, overrideInput);
+        }
+
+        public BlockResult<T> Return(bool success = true)
+        {
+            return resultDispatcher.Return(Result,success);
         }
 
         public BlockResult<T> Return()

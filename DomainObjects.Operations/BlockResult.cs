@@ -8,6 +8,7 @@ namespace DomainObjects.Operations
 {
     public interface IBlockResult
     {
+        bool Success { get; }
         IEmptyable Result { get; }
     }
 
@@ -31,45 +32,47 @@ namespace DomainObjects.Operations
         public IEmptyable OverrideInput { get; set; } = Emptyable.Empty;
         public object State { get; set; }
         public IEmptyable OverrideResult { get; set; } = Emptyable.Empty;
+        
 
-        public int GetNext(List<IStackBlockSpec> blocks, IStackBlockSpec currentBlock)
-        {
-            int next = -1;
-            switch (FlowTarget)
-            {
-                case BlockFlowTargets.Return:
-                    next = currentBlock.Index + 1;
-                    break;
-                case BlockFlowTargets.Break:
-                    next = -1;
-                    break;
-                case BlockFlowTargets.Goto:
-                    next = blocks.Where(x => x.Tag == TargetTag).FirstOrDefault().Index;
-                    break;
-                case BlockFlowTargets.Retry:
-                    return currentBlock.Index;
-                case BlockFlowTargets.Reset:
-                    next = -1;
-                    State = State;
-                    break;
-                case BlockFlowTargets.Restart:
-                    next = 0;
-                    break;
-                case BlockFlowTargets.Skip:
-                    next = next + 1 + TargetIndex;
-                    break;
-                case BlockFlowTargets.End:
-                    break;
-            }
-            if (next < 0 || next >= blocks.Count)
-                return -1;
-            else
-                return next;
-        }
+        //public int GetNext(List<IStackBlockSpec> blocks, IStackBlockSpec currentBlock)
+        //{
+        //    int next = -1;
+        //    switch (FlowTarget)
+        //    {
+        //        case BlockFlowTargets.Return:
+        //            next = currentBlock.Index + 1;
+        //            break;
+        //        case BlockFlowTargets.Break:
+        //            next = -1;
+        //            break;
+        //        case BlockFlowTargets.Goto:
+        //            next = blocks.Where(x => x.Tag == TargetTag).FirstOrDefault().Index;
+        //            break;
+        //        case BlockFlowTargets.Retry:
+        //            return currentBlock.Index;
+        //        case BlockFlowTargets.Reset:
+        //            next = -1;
+        //            State = State;
+        //            break;
+        //        case BlockFlowTargets.Restart:
+        //            next = 0;
+        //            break;
+        //        case BlockFlowTargets.Skip:
+        //            next = next + 1 + TargetIndex;
+        //            break;
+        //        case BlockFlowTargets.End:
+        //            break;
+        //    }
+        //    if (next < 0 || next >= blocks.Count)
+        //        return -1;
+        //    else
+        //        return next;
+        //}
     }
 
     public class BlockResultBase
     {
+        public bool Success { get; internal set; }
         internal BlockResultTarget Target { get; set; }
         internal ExecutionTime ExecutionTime { get; set; }
     }

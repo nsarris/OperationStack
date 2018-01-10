@@ -35,11 +35,14 @@ namespace DomainObjects.Operations
 
     public abstract class OperationResult : IOperationResult
     {
+        public bool Success { get; private set; }
         public IEnumerable<IOperationEvent> Events { get; private set; }
         public IReadOnlyList<BlockTraceResult> StackTrace { get; private set; }
 
-        public OperationResult(IEnumerable<BlockTraceResult> stackTrace)
+        public OperationResult(bool success, IEnumerable<BlockTraceResult> stackTrace)
         {
+            Success = success;
+
             StackTrace = new System.Collections.ObjectModel.ReadOnlyCollection<BlockTraceResult>(
                 stackTrace
                 .ToList());
@@ -50,10 +53,11 @@ namespace DomainObjects.Operations
 
     public class CommandResult : OperationResult,ICommandResult
     {
-        public CommandResult(IEnumerable<BlockTraceResult> stackTrace)
-            :base(stackTrace)
+        public CommandResult(bool success, IEnumerable<BlockTraceResult> stackTrace)
+            : base(success,stackTrace)
         {
 
+            
         }
     }
 
@@ -61,8 +65,8 @@ namespace DomainObjects.Operations
     {
         public Emptyable<T> Result { get; private set; }
 
-        public QueryResult(IEnumerable<BlockTraceResult> stackTrace, Emptyable<T> result)
-            :base(stackTrace)
+        public QueryResult(bool success, IEnumerable<BlockTraceResult> stackTrace, Emptyable<T> result)
+            :base(success, stackTrace)
         {
             Result = result;
         }

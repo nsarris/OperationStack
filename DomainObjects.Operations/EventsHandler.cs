@@ -11,32 +11,22 @@ namespace DomainObjects.Operations
         ResultVoidDispatcher resultDispather = new ResultVoidDispatcher();
         public EventHandlerBlockBase(string tag, TState state, IStackEvents stackEvents) : base(tag, state, stackEvents)
         {
-            
+
         }
 
-        public BlockResultVoid Break()
+        public BlockResultVoid Break(bool success)
         {
-            return resultDispather.Break();
+            return resultDispather.Break(success);
         }
 
-        public BlockResultVoid End()
+        public BlockResultVoid End(bool success = true)
         {
-            return resultDispather.End();
+            return resultDispather.End(success);
         }
 
-        public BlockResultVoid End(object overrideResult)
+        public BlockResultVoid End(bool success, object overrideResult)
         {
-            return resultDispather.End(overrideResult);
-        }
-
-        public BlockResultVoid Goto(string tag)
-        {
-            return resultDispather.Goto(tag);
-        }
-
-        public BlockResultVoid Goto(string tag, object overrideInput)
-        {
-            return resultDispather.Goto(tag, overrideInput);
+            return resultDispather.End(success, overrideResult);
         }
 
         public BlockResultVoid Reset()
@@ -54,21 +44,56 @@ namespace DomainObjects.Operations
             return resultDispather.Restart();
         }
 
+        public BlockResultVoid Return(bool success)
+        {
+            return resultDispather.Return(success);
+        }
+
         public BlockResultVoid Return()
         {
             return resultDispather.Return();
         }
 
+        public BlockResultVoid Goto(string tag, bool success)
+        {
+            return resultDispather.Goto(tag, success);
+        }
+
+        public BlockResultVoid Goto(string tag)
+        {
+            return resultDispather.Goto(tag);
+        }
+
+        public BlockResultVoid Goto(string tag, object overrideInput, bool success)
+        {
+            return resultDispather.Goto(tag, overrideInput, success);
+        }
+
+        public BlockResultVoid Goto(string tag, object overrideInput)
+        {
+            return resultDispather.Goto(tag, overrideInput);
+        }
+
+        public BlockResultVoid Skip(int i, bool success)
+        {
+            return resultDispather.Skip(i, success);
+        }
+
         public BlockResultVoid Skip(int i)
         {
-            return resultDispather.Skip(i); 
+            return resultDispather.Skip(i);
+        }
+
+        public BlockResultVoid Skip(int i, object overrideInput, bool success)
+        {
+            return resultDispather.Skip(i, overrideInput, success);
         }
 
         public BlockResultVoid Skip(int i, object overrideInput)
         {
-            return resultDispather.Skip(i,overrideInput);
+            return resultDispather.Skip(i, overrideInput);
         }
-        
+
     }
 
     public class EventHandlerBlockBase<TState, Tin> : StackBlockBase<TState>, IStackBlock<TState, Tin>, IResultDispatcher<Tin>
@@ -79,32 +104,24 @@ namespace DomainObjects.Operations
             Input = input;
         }
 
-        public Emptyable<Tin> Input {get;protected set;}
+        public Emptyable<Tin> Input { get; protected set; }
 
-        public BlockResult<Tin> Break()
+        public BlockResult<Tin> Break(bool success)
         {
-            return resultDispather.Break();
+            return resultDispather.Break(success);
         }
 
-        public BlockResult<Tin> End()
+        public BlockResult<Tin> End(bool success)
         {
-            return resultDispather.End();
+            return resultDispather.End(success);
         }
 
-        public BlockResult<Tin> End(object overrideResult)
+        public BlockResult<Tin> End(bool success, object overrideResult)
         {
-            return resultDispather.End(overrideResult);
+            return resultDispather.End(success, overrideResult);
         }
 
-        public BlockResult<Tin> Goto(string tag)
-        {
-            return resultDispather.Goto(tag);
-        }
-
-        public BlockResult<Tin> Goto(string tag, object overrideInput)
-        {
-            return resultDispather.Goto(tag, overrideInput);
-        }
+        
 
         public BlockResult<Tin> Reset()
         {
@@ -121,9 +138,19 @@ namespace DomainObjects.Operations
             return resultDispather.Restart();
         }
 
+        public BlockResult<Tin> Return(bool success)
+        {
+            return resultDispather.Return(Input.Value,success);
+        }
+
         public BlockResult<Tin> Return()
         {
             return resultDispather.Return(Input.Value);
+        }
+
+        public BlockResult<Tin> Return(Tin result, bool success)
+        {
+            return resultDispather.Return(result,success);
         }
 
         public BlockResult<Tin> Return(Tin result)
@@ -131,9 +158,39 @@ namespace DomainObjects.Operations
             return resultDispather.Return(result);
         }
 
+        public BlockResult<Tin> Goto(string tag, bool success)
+        {
+            return resultDispather.Goto(tag, success);
+        }
+
+        public BlockResult<Tin> Goto(string tag)
+        {
+            return resultDispather.Goto(tag);
+        }
+
+        public BlockResult<Tin> Goto(string tag, object overrideInput, bool success)
+        {
+            return resultDispather.Goto(tag, overrideInput, success);
+        }
+
+        public BlockResult<Tin> Goto(string tag, object overrideInput)
+        {
+            return resultDispather.Goto(tag, overrideInput);
+        }
+
+        public BlockResult<Tin> Skip(int i, bool success = true)
+        {
+            return resultDispather.Skip(i,success);
+        }
+
         public BlockResult<Tin> Skip(int i)
         {
             return resultDispather.Skip(i);
+        }
+
+        public BlockResult<Tin> Skip(int i, object overrideInput, bool success = true)
+        {
+            return resultDispather.Skip(i, overrideInput,success);
         }
 
         public BlockResult<Tin> Skip(int i, object overrideInput)
@@ -146,7 +203,7 @@ namespace DomainObjects.Operations
             where TEvent : IOperationEvent
     {
         IEnumerable<TEvent> events;
-        
+
         private EventsHandler(string tag, TState state, IStackEvents stackEvents, Func<TEvent, bool> filter = null)
             : base(tag, state, stackEvents)
         {
@@ -168,7 +225,7 @@ namespace DomainObjects.Operations
 
         IEnumerable<TEvent> IEventsHandler<TEvent, TState>.Events => events;
     }
-    
+
 
     public class EventsHandler<TEvent, TState, Tin> : EventHandlerBlockBase<TState, Tin>, IEventsHandler<TEvent, TState, Tin>
             where TEvent : IOperationEvent
@@ -182,13 +239,13 @@ namespace DomainObjects.Operations
             IsEmptyEventBlock = !events.Any();
         }
 
-        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IEventsHandler<TEvent, TState,Tin>, BlockResult<Tin>> func, Func<TEvent, bool> filter = null)
-            : this(tag, state,input, stackEvents)
+        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IEventsHandler<TEvent, TState, Tin>, BlockResult<Tin>> func, Func<TEvent, bool> filter = null)
+            : this(tag, state, input, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IEventsHandler<TEvent, TState,Tin>> action, Func<TEvent, bool> filter = null)
+        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IEventsHandler<TEvent, TState, Tin>> action, Func<TEvent, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => { action(this); return Return(); };
@@ -199,12 +256,12 @@ namespace DomainObjects.Operations
         Emptyable<Tin> IEventHandlerWithInput<TState, Tin>.Result => Input;
     }
 
-   
+
     public class ErrorsHandler<TError, TState> : EventHandlerBlockBase<TState>, IErrorsHandler<TError, TState>
             where TError : IOperationError
     {
         IEnumerable<TError> errors;
-        private ErrorsHandler(string tag, TState state, IStackEvents stackEvents,  Func<TError, bool> filter = null)
+        private ErrorsHandler(string tag, TState state, IStackEvents stackEvents, Func<TError, bool> filter = null)
             : base(tag, state, stackEvents)
         {
             errors = stackEvents.FilterUnhandled(filter, true);
@@ -237,14 +294,14 @@ namespace DomainObjects.Operations
             IsEmptyEventBlock = !errors.Any();
         }
 
-        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IErrorsHandler<TError, TState,Tin>, BlockResult<Tin>> func, Func<TError, bool> filter = null)
-            : this(tag, state, input,stackEvents)
+        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IErrorsHandler<TError, TState, Tin>, BlockResult<Tin>> func, Func<TError, bool> filter = null)
+            : this(tag, state, input, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IErrorsHandler<TError, TState,Tin>> action, Func<TError, bool> filter = null)
-            : this(tag, state,input, stackEvents)
+        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IErrorsHandler<TError, TState, Tin>> action, Func<TError, bool> filter = null)
+            : this(tag, state, input, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
@@ -292,14 +349,14 @@ namespace DomainObjects.Operations
             IsEmptyEventBlock = !errors.Any();
         }
 
-        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IExceptionsErrorHandler<TException, TState,Tin>, BlockResult<Tin>> func, Func<IOperationExceptionError<TException>, bool> filter = null)
-            : this(tag, state,input, stackEvents)
+        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IExceptionsErrorHandler<TException, TState, Tin>, BlockResult<Tin>> func, Func<IOperationExceptionError<TException>, bool> filter = null)
+            : this(tag, state, input, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IExceptionsErrorHandler<TException, TState,Tin>> action, Func<IOperationExceptionError<TException>, bool> filter = null)
-            : this(tag, state,input, stackEvents)
+        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IExceptionsErrorHandler<TException, TState, Tin>> action, Func<IOperationExceptionError<TException>, bool> filter = null)
+            : this(tag, state, input, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }

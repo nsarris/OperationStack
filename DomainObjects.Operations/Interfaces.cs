@@ -13,47 +13,62 @@ namespace DomainObjects.Operations
     public interface IResultDispatcher<T>
     {
         //BlockResult<T> Return();
+        BlockResult<T> Return(T result, bool success);
         BlockResult<T> Return(T result);
-        BlockResult<T> End();
-        BlockResult<T> End(object overrideResult);
-        BlockResult<T> Break();
+        BlockResult<T> End(bool success);
+        BlockResult<T> End(bool success, object overrideResult);
+        BlockResult<T> Break(bool success);
         BlockResult<T> Reset();
         BlockResult<T> Reset(object state);
         BlockResult<T> Restart();
+        BlockResult<T> Goto(string tag, bool success);
         BlockResult<T> Goto(string tag);
+        BlockResult<T> Goto(string tag, object overrideInput, bool success);
         BlockResult<T> Goto(string tag, object overrideInput);
+        BlockResult<T> Skip(int i, bool success);
         BlockResult<T> Skip(int i);
+        BlockResult<T> Skip(int i, object overrideInput, bool success);
         BlockResult<T> Skip(int i, object overrideInput);
     }
 
     public interface IResultVoidDispatcher
     {
+        BlockResultVoid Return(bool success = true);
         BlockResultVoid Return();
-        BlockResultVoid End();
-        BlockResultVoid End(object overrideResult);
-        BlockResultVoid Break();
+        BlockResultVoid End(bool success);
+        BlockResultVoid End(bool success, object overrideResult);
+        BlockResultVoid Break(bool success);
         BlockResultVoid Reset();
         BlockResultVoid Reset(object state);
         BlockResultVoid Restart();
+        BlockResultVoid Goto(string tag, bool success = true);
         BlockResultVoid Goto(string tag);
+        BlockResultVoid Goto(string tag, object overrideInput, bool success = true);
         BlockResultVoid Goto(string tag, object overrideInput);
+        BlockResultVoid Skip(int i, bool success = true);
         BlockResultVoid Skip(int i);
+        BlockResultVoid Skip(int i, object overrideInput, bool success = true);
         BlockResultVoid Skip(int i, object overrideInput);
     }
 
     public interface IResultDispatcher
     {
         //BlockResult<T> Return<T>();
+        BlockResult<T> Return<T>(T result, bool success = true);
         BlockResult<T> Return<T>(T result);
-        BlockResult<T> End<T>();
-        BlockResult<T> End<T>(object overrideResult);
-        BlockResult<T> Break<T>();
+        BlockResult<T> End<T>(bool success);
+        BlockResult<T> End<T>(bool success, object overrideResult);
+        BlockResult<T> Break<T>(bool success);
         BlockResult<T> Reset<T>();
         BlockResult<T> Reset<T>(object state);
         BlockResult<T> Restart<T>();
+        BlockResult<T> Goto<T>(string tag, bool success = true);
         BlockResult<T> Goto<T>(string tag);
+        BlockResult<T> Goto<T>(string tag, object overrideInput, bool success = true);
         BlockResult<T> Goto<T>(string tag, object overrideInput);
+        BlockResult<T> Skip<T>(int i, bool success = true);
         BlockResult<T> Skip<T>(int i);
+        BlockResult<T> Skip<T>(int i, object overrideInput, bool success = true);
         BlockResult<T> Skip<T>(int i, object overrideInput);
     }
 
@@ -77,6 +92,7 @@ namespace DomainObjects.Operations
 
     public interface IStackBlock<TState> : IStackBlock
     {
+        //bool PreviousBlockSuccess { get; }
         TState StackState { get; }
     }
 
@@ -146,6 +162,7 @@ namespace DomainObjects.Operations
     public interface IEventHandlerWithInput<TState, T> : IStackBlock<TState>, IResultDispatcher<T>
     {
         Emptyable<T> Result { get; }
+        BlockResult<T> Return(bool success);
         BlockResult<T> Return();
     }
 
@@ -197,6 +214,7 @@ namespace DomainObjects.Operations
 
     public interface IOperationResult
     {
+        bool Success { get; }
         IEnumerable<IOperationEvent> Events { get; }
 
         IReadOnlyList<BlockTraceResult> StackTrace { get; }

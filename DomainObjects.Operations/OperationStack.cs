@@ -62,6 +62,7 @@ namespace DomainObjects.Operations
 
             var input = Emptyable.Empty;
             var result = Emptyable.Empty;
+            var success = false;
             var stackTrace = new List<BlockTraceResult>();
 
             var blockSpec = Blocks.FirstOrDefault();
@@ -75,13 +76,13 @@ namespace DomainObjects.Operations
                 {
                     var blockResult = block.Execute(Options.TimeMeasurement);
                     blockSpec = HandleBlockResultAndGetNext(blockSpec, stackTrace, block, blockResult, ref input, ref result);
+                    success = blockResult.Success;
                 }
                 else
                     blockSpec = GetNext(blockSpec, new BlockResultTarget() { OverrideInput = input });
-                
             }
 
-            return isCommand ? new CommandResult(stackTrace) : new QueryResult<T>(stackTrace, result.ConvertTo<T>());
+            return isCommand ? new CommandResult(success, stackTrace) : new QueryResult<T>(success, stackTrace, result.ConvertTo<T>());
         }
 
         public ICommandResult ToResult()
@@ -101,6 +102,7 @@ namespace DomainObjects.Operations
 
             IEmptyable input = Emptyable.Empty;
             IEmptyable result = Emptyable.Empty;
+            var success = false;
             var blockSpec = Blocks.FirstOrDefault();
 
             while (blockSpec != null)
@@ -112,13 +114,14 @@ namespace DomainObjects.Operations
                 {
                     var blockResult = await block.ExecuteAsync(Options.TimeMeasurement);
                     blockSpec = HandleBlockResultAndGetNext(blockSpec, stackTrace, block, blockResult, ref input, ref result);
+                    success = blockResult.Success;
                 }
                 else
                     blockSpec = GetNext(blockSpec, new BlockResultTarget() { OverrideInput = input });
                 
             }
 
-            return isCommand ? new CommandResult(stackTrace) : new QueryResult<T>(stackTrace, result.ConvertTo<T>());
+            return isCommand ? new CommandResult(success, stackTrace) : new QueryResult<T>(success, stackTrace, result.ConvertTo<T>());
         }
 
         public async Task<ICommandResult> ToResultAsync()
@@ -159,6 +162,8 @@ namespace DomainObjects.Operations
                     break;
                 case BlockFlowTargets.End:
                     var lastBlock = Blocks.Where(x => x.BlockType == BlockSpecTypes.UnhandledExceptionHandler || x.BlockType == BlockSpecTypes.Finally).FirstOrDefault();
+                    if (currentBlock == Blocks.Last())
+                        return null;
                     if (lastBlock != null)
                         next = lastBlock.Index;
                     break;
