@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
 
-
     internal class OperationStackInternal<TState>
     {
         public OperationStackOptions Options { get; set; } = new OperationStackOptions();
@@ -181,6 +180,10 @@ namespace DomainObjects.Operations
         public bool EndOnException { get; set; } = false;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TState">Type of the state of this operation stack</typeparam>
     public class OperationStack<TState>
     {
         #region Fields and Props
@@ -193,11 +196,20 @@ namespace DomainObjects.Operations
 
         #region Ctor
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state">Initial state of the stack</param>
         public OperationStack(TState state)
         {
             internalStack.State = state;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state">Initial state of the stack</param>
+        /// <param name="options">Override the default options</param>
         public OperationStack(TState state, OperationStackOptions options)
             : this(state)
         {
@@ -212,19 +224,43 @@ namespace DomainObjects.Operations
         }
 
         #endregion Ctor
-        
+
         #region Sync
 
+        /// <summary>
+        /// Add a command operation
+        /// </summary>
+        /// <remarks>
+        /// A command operation is a function that doesn't return a value
+        /// </remarks>
+        /// <param name="op">The command to be executed</param>
+        /// <returns></returns>
         public OperationStack<TState> Then(Func<ICommand<TState>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(new StackBlockSpecCommand<TState>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// Add a command operation
+        /// </summary>
+        /// <remarks>
+        /// A command operation is a function that doesn't return a value
+        /// </remarks>
+        /// <param name="op">The command to be executed</param>
+        /// <returns></returns>
         public OperationStack<TState> Then(Action<ICommand<TState>> op)
         {
             return internalStack.CreateNew(new StackBlockSpecCommand<TState>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// Add a query operation
+        /// </summary>
+        /// <remarks>
+        /// A query operation is a function that returns a value
+        /// </remarks>
+        /// <param name="op">The query to be executed</param>
+        /// <returns></returns>
         public OperationStack<TState, T> ThenReturn<T>(Func<IQuery<TState>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
@@ -235,37 +271,85 @@ namespace DomainObjects.Operations
             return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="op">External command stack to append</param>
+        /// <returns></returns>
         public OperationStack<TState> ThenAppend(Func<IOperationBlock<TState>, ICommandResult> op)
         {
             return internalStack.CreateNew(new StackBlockSpecCommand<TState>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="op">External query stack to append</param>
+        /// <returns></returns>
         public OperationStack<TState, T> ThenAppend<T>(Func<IOperationBlock<TState>, IQueryResult<T>> op)
         {
             return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="op">External command's stack result to append</param>
+        /// <returns></returns>
         public OperationStack<TState> ThenAppend(ICommandResult res)
         {
             return internalStack.CreateNew(new StackBlockSpecCommand<TState>(internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="op">External query's stack result to append</param>
+        /// <returns></returns>
         public OperationStack<TState, T> ThenAppend<T>(IQueryResult<T> res)
         {
             return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, T>(internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
         }
 
-
+        /// <summary>
+        /// Add a command operation
+        /// </summary>
+        /// <remarks>
+        /// A command operation is a function that doesn't return a value
+        /// </remarks>
+        /// <param name="tag">Mark the block with a tag for reference</param>
+        /// <param name="op">The command to be executed</param>
+        /// <returns></returns>
+        /// /// <returns></returns>
         public OperationStack<TState> Then(string tag, Func<ICommand<TState>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(new StackBlockSpecCommand<TState>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// Add a command operation
+        /// </summary>
+        /// <remarks>
+        /// A command operation is a function that doesn't return a value
+        /// </remarks>
+        /// <param name="tag">Mark the block with a tag for reference</param>
+        /// <param name="op">The command to be executed</param>
+        /// <returns></returns>
+        /// /// <returns></returns>
         public OperationStack<TState> Then(string tag, Action<ICommand<TState>> op)
         {
             return internalStack.CreateNew(new StackBlockSpecCommand<TState>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
         }
 
+        /// <summary>
+        /// Add a query operation
+        /// </summary>
+        /// <remarks>
+        /// A query operation is a function that returns a value
+        /// </remarks>
+        /// <param name="op">The query to be executed</param>
+        /// <param name="tag">Mark the block with a tag for reference</param>
+        /// <returns></returns>
         public OperationStack<TState, T> ThenReturn<T>(string tag, Func<IQuery<TState>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
@@ -1038,7 +1122,6 @@ namespace DomainObjects.Operations
         {
 
         }
-
         public OperationStack(object state, OperationStackOptions options)
             : base(state, options)
         {
