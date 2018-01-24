@@ -7,16 +7,17 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class StackEvents : IStackEvents
+    public class StackEvents<TOperationEvent> : IStackEvents<TOperationEvent>
+        where TOperationEvent : IOperationEvent
     {
-        IEnumerable<IOperationEvent> events;
-        public StackEvents(IEnumerable<IOperationEvent> events)
+        IEnumerable<TOperationEvent> events;
+        public StackEvents(IEnumerable<TOperationEvent> events)
         {
             this.events = events;
         }
 
         public IEnumerable<TEvent> Filter<TEvent>(Func<TEvent, bool> filter = null) 
-            where TEvent : IOperationEvent
+            where TEvent : TOperationEvent
         {
             var events = this.OfType<TEvent>();
             if (filter != null)
@@ -25,7 +26,7 @@ namespace DomainObjects.Operations
         }
 
         public IEnumerable<TEvent> FilterUnhandled<TEvent>(Func<TEvent, bool> filter = null, bool markAsHandled = false)
-            where TEvent : IOperationEvent
+            where TEvent : TOperationEvent
         {
             var events = this.OfType<TEvent>().Where(x => !x.Handled);
             if (filter != null)
@@ -35,7 +36,19 @@ namespace DomainObjects.Operations
             return r;
         }
 
-        public IEnumerator<IOperationEvent> GetEnumerator()
+        public IEnumerable<IOperationExceptionError<TEvent, TException>> FilterUnhandledException<TEvent,TException>(Func<IOperationExceptionError<TEvent, TException>, bool> filter = null, bool markAsHandled = false) where TException : Exception where TEvent : TOperationEvent
+        {
+            var events = this.OfType<TEvent>()
+                .Where(x => x.Exception is TException && !x.Handled)
+                .Select(x => new OperationExceptionError<TEvent,TException>(x, x.Exception as TException) as IOperationExceptionError<TEvent,TException>);
+            if (filter != null)
+                events = events.Where(filter);
+            var r = events.ToList();
+            r.ForEach(x => x.Error.Handled = true);
+            return r;
+        }
+
+        public IEnumerator<TOperationEvent> GetEnumerator()
         {
             return events.GetEnumerator();
         }

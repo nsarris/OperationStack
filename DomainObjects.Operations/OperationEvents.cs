@@ -6,17 +6,18 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class OperationEvents : List<IOperationEvent>, IOperationEvents
+    public class OperationEvents<TOperationEvent> : List<TOperationEvent>, IOperationEvents<TOperationEvent>
+        where TOperationEvent :IOperationEvent
     {
         public OperationEvents()
         {
 
         }
-        public OperationEvents(IEnumerable<IOperationEvent> events)
+        public OperationEvents(IEnumerable<TOperationEvent> events)
         {
             this.Append(events);
         }
-        public void Append(IEnumerable<IOperationEvent> events)
+        public void Append(IEnumerable<TOperationEvent> events)
         {
             this.AddRange(events);
         }
@@ -25,7 +26,7 @@ namespace DomainObjects.Operations
         {
             get
             {
-                return this.OfType<OperationError>().Any(x => (x.UnhandledException));
+                return this.Any(x => x.IsException && x.UnhandledException);
             }
         }
     }
@@ -33,40 +34,54 @@ namespace DomainObjects.Operations
     public class OperationEvent : IOperationEvent
     {
         public bool Handled { get; set; }
-    }
 
-    public class OperationError : OperationEvent, IOperationError
-    {
-        public OperationError(Exception exception)
+        public bool IsError { get; protected set; }
+
+        public bool IsException => Exception != null;
+
+        public Exception Exception { get; private set; }
+
+        public bool UnhandledException { get; private set; }
+
+        public OperationEvent(Exception exception, bool unhandled = false)
         {
             Exception = exception;
-        }
-        public Exception Exception { get; private set; }
-        public bool UnhandledException { get; set; }
-
-        public static OperationError FromException(Exception e, bool Unhandled = false)
-        {
-            var type = typeof(OperationExceptionEvent<>).MakeGenericType(new[] { e.GetType() });
-            var error = (OperationError)(Activator.CreateInstance(type, new object[] { e }));
-            error.UnhandledException = Unhandled;
-            return error;
+            IsError = true;
+            UnhandledException = unhandled;
         }
     }
 
-    public class OperationExceptionEvent<TException> : OperationError, IOperationExceptionError, IOperationExceptionError<TException>
+    //public class OperationError : OperationEvent, IOperationError
+    //{
+    //    public OperationError(Exception exception, bool unhandled = false)
+    //    {
+    //        Exception = exception;
+    //        UnhandledException = unhandled;
+    //    }
+    //    public Exception Exception { get; private set; }
+    //    public bool UnhandledException { get; set; }
+
+    //    //public static OperationError FromException(Exception e, bool unhandled = false)
+    //    //{
+    //    //    var type = typeof(OperationExceptionError<>).MakeGenericType(new[] { e.GetType() });
+    //    //    var error = (OperationError)(Activator.CreateInstance(type, new object[] { e }));
+    //    //    error.UnhandledException = unhandled;
+    //    //    return error;
+    //    //}
+    //}
+
+    public class OperationExceptionError<TEvent, TException> : IOperationExceptionError<TEvent,TException>
+        where TEvent : IOperationEvent
         where TException : Exception
     {
-        public OperationExceptionEvent(TException exception)
-            :base(exception)
+        
+        public OperationExceptionError(TEvent error, TException exception)
         {
+            Error = error;
         }
 
-        internal OperationExceptionEvent(TException exception, bool Unhandled)
-            : base(exception)
-        {
-            UnhandledException = Unhandled;
-        }
-
-        public new TException Exception => (TException)(base.Exception);
+        public TEvent Error { get; private set; }
+        
+        public TException Exception => Error?.Exception as TException;
     }
 }

@@ -21,12 +21,13 @@ namespace DomainObjects.Operations
         EventsHandler
     }
 
-    internal abstract class StackBlockSpecBase<TState> : IStackBlockSpec
+    internal abstract class StackBlockSpecBase<TState, TOperationEvent> : IStackBlockSpec
+        where TOperationEvent : IOperationEvent
     {
         public string Tag { get; private set; }
         public int Index { get; private set; }
         public BlockSpecTypes BlockType { get; private set; }
-        public abstract StackBlockBase<TState> CreateBlock(TState state, IStackEvents stackEvents, IEmptyable input);
+        public abstract StackBlockBase<TState, TOperationEvent> CreateBlock(TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input);
 
         public StackBlockSpecBase(int index, BlockSpecTypes blockType)
             : this("Block " + index, index, blockType)
@@ -45,7 +46,7 @@ namespace DomainObjects.Operations
         }
     }
 
-    
 
-   
+
+
 }

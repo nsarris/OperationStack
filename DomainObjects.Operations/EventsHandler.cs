@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class EventHandlerBlockBase<TState> : StackBlockBase<TState>, IResultVoidDispatcher
+    public class EventHandlerBlockBase<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, IResultVoidDispatcher
+        where TOperationEvent : IOperationEvent
     {
         ResultVoidDispatcher resultDispather = new ResultVoidDispatcher();
-        public EventHandlerBlockBase(string tag, TState state, IStackEvents stackEvents) : base(tag, state, stackEvents)
+        public EventHandlerBlockBase(string tag, TState state, IStackEvents<TOperationEvent> stackEvents) : base(tag, state, stackEvents)
         {
 
         }
@@ -96,10 +97,11 @@ namespace DomainObjects.Operations
 
     }
 
-    public class EventHandlerBlockBase<TState, Tin> : StackBlockBase<TState>, IStackBlock<TState, Tin>, IResultDispatcher<Tin>
+    public class EventHandlerBlockBase<TState, TOperationEvent, Tin> : StackBlockBase<TState, TOperationEvent>, IStackBlock<TState, TOperationEvent, Tin>, IResultDispatcher<Tin>
+        where TOperationEvent : IOperationEvent
     {
         ResultDispatcher<Tin> resultDispather = new ResultDispatcher<Tin>();
-        internal EventHandlerBlockBase(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents) : base(tag, state, stackEvents)
+        internal EventHandlerBlockBase(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents) : base(tag, state, stackEvents)
         {
             Input = input;
         }
@@ -121,7 +123,7 @@ namespace DomainObjects.Operations
             return resultDispather.End(success, overrideResult);
         }
 
-        
+
 
         public BlockResult<Tin> Reset()
         {
@@ -140,7 +142,7 @@ namespace DomainObjects.Operations
 
         public BlockResult<Tin> Return(bool success)
         {
-            return resultDispather.Return(Input.Value,success);
+            return resultDispather.Return(Input.Value, success);
         }
 
         public BlockResult<Tin> Return()
@@ -150,7 +152,7 @@ namespace DomainObjects.Operations
 
         public BlockResult<Tin> Return(Tin result, bool success)
         {
-            return resultDispather.Return(result,success);
+            return resultDispather.Return(result, success);
         }
 
         public BlockResult<Tin> Return(Tin result)
@@ -180,7 +182,7 @@ namespace DomainObjects.Operations
 
         public BlockResult<Tin> Skip(int i, bool success = true)
         {
-            return resultDispather.Skip(i,success);
+            return resultDispather.Skip(i, success);
         }
 
         public BlockResult<Tin> Skip(int i)
@@ -190,7 +192,7 @@ namespace DomainObjects.Operations
 
         public BlockResult<Tin> Skip(int i, object overrideInput, bool success = true)
         {
-            return resultDispather.Skip(i, overrideInput,success);
+            return resultDispather.Skip(i, overrideInput, success);
         }
 
         public BlockResult<Tin> Skip(int i, object overrideInput)
@@ -199,39 +201,41 @@ namespace DomainObjects.Operations
         }
     }
 
-    public class EventsHandler<TEvent, TState> : EventHandlerBlockBase<TState>, IEventsHandler<TEvent, TState>
-            where TEvent : IOperationEvent
+    public class EventsHandler<TEvent, TState, TOperationEvent> : EventHandlerBlockBase<TState, TOperationEvent>, IEventsHandler<TEvent, TState, TOperationEvent>
+            where TOperationEvent : IOperationEvent
+            where TEvent : TOperationEvent
     {
         IEnumerable<TEvent> events;
 
-        private EventsHandler(string tag, TState state, IStackEvents stackEvents, Func<TEvent, bool> filter = null)
+        private EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<TEvent, bool> filter = null)
             : base(tag, state, stackEvents)
         {
             events = stackEvents.FilterUnhandled(filter, true);
             IsEmptyEventBlock = !events.Any();
         }
 
-        public EventsHandler(string tag, TState state, IStackEvents stackEvents, Func<IEventsHandler<TEvent, TState>, BlockResultVoid> func, Func<TEvent, bool> filter = null)
+        public EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IEventsHandler<TEvent, TState, TOperationEvent>, BlockResultVoid> func, Func<TEvent, bool> filter = null)
             : this(tag, state, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public EventsHandler(string tag, TState state, IStackEvents stackEvents, Action<IEventsHandler<TEvent, TState>> action, Func<TEvent, bool> filter = null)
+        public EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Action<IEventsHandler<TEvent, TState, TOperationEvent>> action, Func<TEvent, bool> filter = null)
             : this(tag, state, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
 
-        IEnumerable<TEvent> IEventsHandler<TEvent, TState>.Events => events;
+        IEnumerable<TEvent> IEventsHandler<TEvent, TState, TOperationEvent>.Events => events;
     }
 
 
-    public class EventsHandler<TEvent, TState, Tin> : EventHandlerBlockBase<TState, Tin>, IEventsHandler<TEvent, TState, Tin>
-            where TEvent : IOperationEvent
+    public class EventsHandler<TEvent, TState, TOperationEvent, Tin> : EventHandlerBlockBase<TState, TOperationEvent, Tin>, IEventsHandler<TEvent, TState, TOperationEvent, Tin>
+            where TOperationEvent : IOperationEvent
+            where TEvent : TOperationEvent
     {
         IEnumerable<TEvent> events;
-        private EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<TEvent, bool> filter = null)
+        private EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<TEvent, bool> filter = null)
             : base(tag, state, input, stackEvents)
         {
             Input = input;
@@ -239,54 +243,56 @@ namespace DomainObjects.Operations
             IsEmptyEventBlock = !events.Any();
         }
 
-        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IEventsHandler<TEvent, TState, Tin>, BlockResult<Tin>> func, Func<TEvent, bool> filter = null)
+        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<IEventsHandler<TEvent, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<TEvent, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IEventsHandler<TEvent, TState, Tin>> action, Func<TEvent, bool> filter = null)
+        public EventsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Action<IEventsHandler<TEvent, TState, TOperationEvent, Tin>> action, Func<TEvent, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
 
-        IEnumerable<TEvent> IEventsHandler<TEvent, TState, Tin>.Events => events;
+        IEnumerable<TEvent> IEventsHandler<TEvent, TState, TOperationEvent, Tin>.Events => events;
 
-        Emptyable<Tin> IEventHandlerWithInput<TState, Tin>.Result => Input;
+        Emptyable<Tin> IEventHandlerWithInput<TState, TOperationEvent, Tin>.Result => Input;
     }
 
 
-    public class ErrorsHandler<TError, TState> : EventHandlerBlockBase<TState>, IErrorsHandler<TError, TState>
-            where TError : IOperationError
+    public class ErrorsHandler<TError, TState, TOperationEvent> : EventHandlerBlockBase<TState, TOperationEvent>, IErrorsHandler<TError, TState, TOperationEvent>
+            where TOperationEvent : IOperationEvent
+            where TError : TOperationEvent
     {
         IEnumerable<TError> errors;
-        private ErrorsHandler(string tag, TState state, IStackEvents stackEvents, Func<TError, bool> filter = null)
+        private ErrorsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<TError, bool> filter = null)
             : base(tag, state, stackEvents)
         {
             errors = stackEvents.FilterUnhandled(filter, true);
             IsEmptyEventBlock = !errors.Any();
         }
 
-        public ErrorsHandler(string tag, TState state, IStackEvents stackEvents, Func<IErrorsHandler<TError, TState>, BlockResultVoid> func, Func<TError, bool> filter = null)
+        public ErrorsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> func, Func<TError, bool> filter = null)
             : this(tag, state, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public ErrorsHandler(string tag, TState state, IStackEvents stackEvents, Action<IErrorsHandler<TError, TState>> action, Func<TError, bool> filter = null)
+        public ErrorsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Action<IErrorsHandler<TError, TState, TOperationEvent>> action, Func<TError, bool> filter = null)
             : this(tag, state, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
-        IEnumerable<TError> IErrorsHandler<TError, TState>.Errors => errors;
+        IEnumerable<TError> IErrorsHandler<TError, TState, TOperationEvent>.Errors => errors;
     }
 
-    public class ErrorsHandler<TError, TState, Tin> : EventHandlerBlockBase<TState, Tin>, IErrorsHandler<TError, TState, Tin>
-            where TError : IOperationError
+    public class ErrorsHandler<TError, TState, TOperationEvent, Tin> : EventHandlerBlockBase<TState, TOperationEvent, Tin>, IErrorsHandler<TError, TState, TOperationEvent, Tin>
+            where TOperationEvent : IOperationEvent
+            where TError : TOperationEvent
     {
         IEnumerable<TError> errors;
-        private ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<TError, bool> filter = null)
+        private ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<TError, bool> filter = null)
             : base(tag, state, input, stackEvents)
         {
             Input = input;
@@ -294,76 +300,80 @@ namespace DomainObjects.Operations
             IsEmptyEventBlock = !errors.Any();
         }
 
-        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IErrorsHandler<TError, TState, Tin>, BlockResult<Tin>> func, Func<TError, bool> filter = null)
+        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<IErrorsHandler<TError, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<TError, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IErrorsHandler<TError, TState, Tin>> action, Func<TError, bool> filter = null)
+        public ErrorsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Action<IErrorsHandler<TError, TState, TOperationEvent, Tin>> action, Func<TError, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
 
-        IEnumerable<TError> IErrorsHandler<TError, TState, Tin>.Errors => errors;
+        IEnumerable<TError> IErrorsHandler<TError, TState, TOperationEvent, Tin>.Errors => errors;
 
-        Emptyable<Tin> IEventHandlerWithInput<TState, Tin>.Result => Input;
+        Emptyable<Tin> IEventHandlerWithInput<TState, TOperationEvent, Tin>.Result => Input;
     }
 
-    public class ExceptionsHandler<TException, TState> : EventHandlerBlockBase<TState>, IExceptionsErrorHandler<TException, TState>
+    public class ExceptionsHandler<TEvent, TException, TState, TOperationEvent> : EventHandlerBlockBase<TState, TOperationEvent>, IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent>
             where TException : Exception
+            where TOperationEvent : IOperationEvent
+            where TEvent : TOperationEvent
     {
-        IEnumerable<IOperationExceptionError<TException>> errors;
-        private ExceptionsHandler(string tag, TState state, IStackEvents stackEvents, Func<IOperationExceptionError<TException>, bool> filter = null)
+        IEnumerable<IOperationExceptionError<TEvent, TException>> errors;
+        private ExceptionsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null)
             : base(tag, state, stackEvents)
         {
-            errors = stackEvents.FilterUnhandled(filter, true);
+            errors = stackEvents.FilterUnhandledException(filter, true);
             IsEmptyEventBlock = !errors.Any();
         }
 
-        public ExceptionsHandler(string tag, TState state, IStackEvents stackEvents, Func<IExceptionsErrorHandler<TException, TState>, BlockResultVoid> func, Func<IOperationExceptionError<TException>, bool> filter = null)
+        public ExceptionsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent>, BlockResultVoid> func, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null)
             : this(tag, state, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public ExceptionsHandler(string tag, TState state, IStackEvents stackEvents, Action<IExceptionsErrorHandler<TException, TState>> action, Func<IOperationExceptionError<TException>, bool> filter = null)
+        public ExceptionsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Action<IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent>> action, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null)
             : this(tag, state, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
 
-        IEnumerable<IOperationExceptionError<TException>> IExceptionsErrorHandler<TException, TState>.ExceptionErrors => errors;
+        IEnumerable<IOperationExceptionError<TEvent, TException>> IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent>.ExceptionErrors => errors;
     }
 
-    public class ExceptionsHandler<TException, TState, Tin> : EventHandlerBlockBase<TState, Tin>, IExceptionsErrorHandler<TException, TState, Tin>
+    public class ExceptionsHandler<TEvent, TException, TState, TOperationEvent, Tin> : EventHandlerBlockBase<TState, TOperationEvent, Tin>, IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent, Tin>
             where TException : Exception
+            where TOperationEvent : IOperationEvent
+            where TEvent : TOperationEvent
     {
-        IEnumerable<IOperationExceptionError<TException>> errors;
-        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IOperationExceptionError<TException>, bool> filter = null)
+        IEnumerable<IOperationExceptionError<TEvent, TException>> errors;
+        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null)
             : base(tag, state, input, stackEvents)
         {
             Input = input;
-            errors = stackEvents.FilterUnhandled(filter, true);
+            errors = stackEvents.FilterUnhandledException(filter, true);
             IsEmptyEventBlock = !errors.Any();
         }
 
-        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Func<IExceptionsErrorHandler<TException, TState, Tin>, BlockResult<Tin>> func, Func<IOperationExceptionError<TException>, bool> filter = null)
+        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => func(this);
         }
 
-        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents stackEvents, Action<IExceptionsErrorHandler<TException, TState, Tin>> action, Func<IOperationExceptionError<TException>, bool> filter = null)
+        public ExceptionsHandler(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Action<IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent, Tin>> action, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null)
             : this(tag, state, input, stackEvents)
         {
             executor = () => { action(this); return Return(); };
         }
 
-        IEnumerable<IOperationExceptionError<TException>> IExceptionsErrorHandler<TException, TState, Tin>.ExceptionErrors => errors;
+        IEnumerable<IOperationExceptionError<TEvent, TException>> IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent, Tin>.ExceptionErrors => errors;
 
-        Emptyable<Tin> IEventHandlerWithInput<TState, Tin>.Result => Input;
+        Emptyable<Tin> IEventHandlerWithInput<TState, TOperationEvent, Tin>.Result => Input;
     }
 
 }
