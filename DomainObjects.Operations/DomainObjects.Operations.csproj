@@ -90,5 +90,8 @@
     <Compile Include="_Obsolete\StackBlockSpecQuery.cs" />
     <Compile Include="Events\StackEvents.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Todo.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

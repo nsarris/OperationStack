@@ -1,0 +1,10 @@
+﻿1. Add resultDispatcher.Throw() => adds unhadled error or exception
+2. Add resultDispatcher.Retry()
+3. Rename resultDispatcher => resultBuilder
+4. Refactor dispatcher / result /target
+5. Test success flow (esp. on appended stacks)
+6. Refactor event handlers to pass through input 
+7. Manage success on event handlers (?)
+8. Investigate if ToResult can take input other than state
+9. Clean up interfaces
+10. Refactor event handlers, add Catch, handle success flow
