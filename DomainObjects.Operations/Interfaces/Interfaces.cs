@@ -7,10 +7,43 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    
+
+    public interface IOperation
+    {
+        bool SupportsSync { get; }
+        bool SupportsAsync { get; }
+        bool PreferAsync { get; }
+    }
+    public interface IQueryOperation<TOperationEvent, TResult> : IOperation
+        where TOperationEvent : IOperationEvent
+    {
+        IQueryResult<TOperationEvent, TResult> ToResult();
+        Task<IQueryResult<TOperationEvent, TResult>> ToResultAsync();
+    }
+
+    public interface ICommandOperation<TOperationEvent> : IOperation
+        where TOperationEvent : IOperationEvent
+    {
+        ICommandResult<TOperationEvent> ToResult();
+        Task<ICommandResult<TOperationEvent>> ToResultAsync();
+    }
+
+    public interface IQueryOperation<TState, TOperationEvent, TResult> : IQueryOperation<TOperationEvent, TResult>
+        where TOperationEvent : IOperationEvent
+    {
+        IQueryResult<TOperationEvent, TResult> ToResult(TState initialState);
+        Task<IQueryResult<TOperationEvent, TResult>> ToResultAsync(TState initialState);
+    }
+
+    public interface ICommandOperation<TState, TOperationEvent> : ICommandOperation<TOperationEvent>
+        where TOperationEvent : IOperationEvent
+    {
+        ICommandResult<TOperationEvent> ToResult(TState initialState);
+        Task<ICommandResult<TOperationEvent>> ToResultAsync(TState initialState);
+    }
 
 
-    public interface IResultDispatcher<T>
+    public interface IResultDispatcher<T, TState>
     {
         //BlockResult<T> Return();
         BlockResult<T> Return(T result, bool success);
@@ -19,7 +52,7 @@ namespace DomainObjects.Operations
         BlockResult<T> End(bool success, object overrideResult);
         BlockResult<T> Break(bool success);
         BlockResult<T> Reset();
-        BlockResult<T> Reset(object state);
+        BlockResult<T> Reset(TState state);
         BlockResult<T> Restart();
         BlockResult<T> Goto(string tag, bool success);
         BlockResult<T> Goto(string tag);
@@ -31,7 +64,7 @@ namespace DomainObjects.Operations
         BlockResult<T> Skip(int i, object overrideInput);
     }
 
-    public interface IResultVoidDispatcher
+    public interface IResultVoidDispatcher<TState>
     {
         BlockResultVoid Return(bool success = true);
         BlockResultVoid Return();
@@ -39,7 +72,7 @@ namespace DomainObjects.Operations
         BlockResultVoid End(bool success, object overrideResult);
         BlockResultVoid Break(bool success);
         BlockResultVoid Reset();
-        BlockResultVoid Reset(object state);
+        BlockResultVoid Reset(TState state);
         BlockResultVoid Restart();
         BlockResultVoid Goto(string tag, bool success = true);
         BlockResultVoid Goto(string tag);
@@ -51,7 +84,7 @@ namespace DomainObjects.Operations
         BlockResultVoid Skip(int i, object overrideInput);
     }
 
-    public interface IResultDispatcher
+    public interface IResultDispatcher<TState>
     {
         //BlockResult<T> Return<T>();
         BlockResult<T> Return<T>(T result, bool success = true);
@@ -60,7 +93,7 @@ namespace DomainObjects.Operations
         BlockResult<T> End<T>(bool success, object overrideResult);
         BlockResult<T> Break<T>(bool success);
         BlockResult<T> Reset<T>();
-        BlockResult<T> Reset<T>(object state);
+        BlockResult<T> Reset<T>(TState state);
         BlockResult<T> Restart<T>();
         BlockResult<T> Goto<T>(string tag, bool success = true);
         BlockResult<T> Goto<T>(string tag);
@@ -85,7 +118,7 @@ namespace DomainObjects.Operations
     {
         void Add(TOperationEvent @event);
         void Append(IEnumerable<TOperationEvent> events);
-        bool HasUnhandledException { get; }
+        bool HasUnhandledErrors { get; }
     }
 
     public interface IStackBlock<TOperationEvent>
@@ -98,7 +131,7 @@ namespace DomainObjects.Operations
         where TOperationEvent : IOperationEvent
     {
         //bool PreviousBlockSuccess { get; }
-        TState StackState { get; }
+        TState StackState { get; set; }
     }
 
     public interface IStackBlock<TState, TOperationEvent, T> : IStackBlock<TState, TOperationEvent>
@@ -120,15 +153,15 @@ namespace DomainObjects.Operations
 
     }
 
-    public interface IQuery<TState, TOperationEvent> : IOperationBlock<TState, TOperationEvent>, IResultDispatcher
+    public interface IQuery<TState, TOperationEvent> : IOperationBlock<TState, TOperationEvent>, IResultDispatcher<TState>
         where TOperationEvent : IOperationEvent
     {
-        IQueryResultProxy<T> DefineResult<T>();
-        IQueryResultProxy<T> DefineResult<T>(T result);
-        IQueryResultProxy<T> DefineResult<T>(Expression<Func<T>> expression);
+        IQueryResultProxy<T,TState> DefineResult<T>();
+        IQueryResultProxy<T, TState> DefineResult<T>(T result);
+        IQueryResultProxy<T, TState> DefineResult<T>(Expression<Func<T>> expression);
     }
 
-    public interface ICommand<TState, TOperationEvent> : IOperationBlock<TState, TOperationEvent>, IResultVoidDispatcher
+    public interface ICommand<TState, TOperationEvent> : IOperationBlock<TState, TOperationEvent>, IResultVoidDispatcher<TState>
         where TOperationEvent : IOperationEvent
     {
 
@@ -154,7 +187,7 @@ namespace DomainObjects.Operations
 
 
 
-    public interface ITypedQuery<TState, TOperationEvent, T> : IOperationBlock<TState, TOperationEvent>, IResultDispatcher<T>
+    public interface ITypedQuery<TState, TOperationEvent, T> : IOperationBlock<TState, TOperationEvent>, IResultDispatcher<TState>, IResultDispatcher<T,TState>
         where TOperationEvent : IOperationEvent
     {
 
@@ -168,13 +201,13 @@ namespace DomainObjects.Operations
 
 
 
-    public interface IEventHandler<TState, TOperationEvent> : IStackBlock<TState, TOperationEvent>, IResultVoidDispatcher
+    public interface IEventHandler<TState, TOperationEvent> : IStackBlock<TState, TOperationEvent>, IResultVoidDispatcher<TState>
         where TOperationEvent : IOperationEvent
     {
 
     }
 
-    public interface IEventHandlerWithInput<TState, TOperationEvent, T> : IStackBlock<TState, TOperationEvent, T>, IResultDispatcher<T>
+    public interface IEventHandlerWithInput<TState, TOperationEvent, T> : IStackBlock<TState, TOperationEvent, T>, IResultDispatcher<T,TState>
         where TOperationEvent : IOperationEvent
     {
         Emptyable<T> Result { get; }
@@ -230,7 +263,7 @@ namespace DomainObjects.Operations
     }
 
 
-    public interface IQueryResultProxy<T> : IResultDispatcher<T>
+    public interface IQueryResultProxy<T,TState> : IResultDispatcher<T,TState>
     {
         T Result { get; set; }
     }
@@ -259,11 +292,13 @@ namespace DomainObjects.Operations
 
     public interface IOperationEvent
     {
-        bool Handled { get; set; }
+        string Message { get; }
+        string UserMessage { get; set; }
+        bool IsHandled { get; set; }
         bool IsError { get; }
         bool IsException { get; }
         Exception Exception { get; }
-        bool UnhandledException { get; }
+        //bool UnhandledException { get; }
     }
 
     
@@ -276,8 +311,12 @@ namespace DomainObjects.Operations
     }
 
 
+    public interface IBlockResult
+    {
+        bool Success { get; }
+        IEmptyable Result { get; }
+    }
 
-    
 
-    
+
 }

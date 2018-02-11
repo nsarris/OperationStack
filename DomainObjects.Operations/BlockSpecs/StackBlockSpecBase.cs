@@ -6,22 +6,21 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal interface IStackBlockSpec
-    {
-        string Tag { get; }
-        int Index { get; }
-        BlockSpecTypes BlockType { get; }
-    }
+    //internal interface IStackBlockSpec
+    //{
+    //    string Tag { get; }
+    //    int Index { get; }
+    //    BlockSpecTypes BlockType { get; }
+    //}
 
     internal enum BlockSpecTypes
     {
         Operation,
         Finally,
-        UnhandledExceptionHandler,
         EventsHandler
     }
 
-    internal abstract class StackBlockSpecBase<TState, TOperationEvent> : IStackBlockSpec
+    internal abstract class StackBlockSpecBase<TState, TOperationEvent> //: IStackBlockSpec
         where TOperationEvent : IOperationEvent
     {
         public string Tag { get; private set; }

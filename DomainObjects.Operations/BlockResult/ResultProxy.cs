@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class QueryResultProxy<T> : IQueryResultProxy<T>
+    public class QueryResultProxy<T, TState> : IQueryResultProxy<T,TState>
     {
-        private ResultDispatcher<T> resultDispatcher = new ResultDispatcher<T>();
+        private ResultDispatcher<T,TState> resultDispatcher = new ResultDispatcher<T,TState>();
         public T Result { get; set; }
 
         public BlockResult<T> Break(bool success)
@@ -51,7 +51,7 @@ namespace DomainObjects.Operations
             return resultDispatcher.Reset();
         }
 
-        public BlockResult<T> Reset(object state)
+        public BlockResult<T> Reset(TState state)
         {
             return resultDispatcher.Reset(state);
         }

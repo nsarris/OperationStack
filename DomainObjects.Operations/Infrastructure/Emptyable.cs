@@ -79,18 +79,14 @@ namespace DomainObjects.Operations
 
         public Emptyable<Tout> ConvertTo<Tout>()
         {
-            Emptyable<Tout> e;
-            if (typeof(T) != typeof(Tout) && IsEmpty)
+            Emptyable<Tout> e = new Emptyable<Tout>();
+            if (!IsEmpty)
             {
-                //if (IsEmpty)
-                    e = new Emptyable<Tout>();
-                //else
-                //{
-                //    e = new Emptyable<Tout>((Tout)Convert.ChangeType(value, typeof(T)));
-                //}
+                if (typeof(T) == typeof(Tout))
+                    e = new Emptyable<Tout>(((Tout)(object)value));
+                else if (typeof(T) != typeof(Tout))
+                    e = new Emptyable<Tout>((Tout)Convert.ChangeType(value, typeof(T)));
             }
-            else
-                e = new Emptyable<Tout>((Tout)Convert.ChangeType(value, typeof(T)));
 
             return e;
         }

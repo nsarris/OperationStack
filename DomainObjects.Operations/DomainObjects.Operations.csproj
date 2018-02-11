@@ -45,28 +45,50 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BlockFlowTarget.cs" />
-    <Compile Include="EventsHandler.cs" />
-    <Compile Include="StackBlockSpecBase.cs" />
-    <Compile Include="Emptyable.cs" />
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="ExecutionTime.cs" />
-    <Compile Include="Interfaces.cs" />
-    <Compile Include="Operation.cs" />
-    <Compile Include="OperationEvents.cs" />
-    <Compile Include="OperationResult.cs" />
+    <Compile Include="BlockResult\BlockResultTarget.cs" />
+    <Compile Include="BlockResult\ResultVoidDispatcher.cs" />
+    <Compile Include="Blocks\CommandBlock.cs" />
+    <Compile Include="Blocks\CommandBlockWithInput.cs" />
+    <Compile Include="Blocks\ErrorsHandler.cs" />
+    <Compile Include="Blocks\ErrorsHandlerWithInput.cs" />
+    <Compile Include="Blocks\EventHandlerBlockBase.cs" />
+    <Compile Include="Blocks\EventHandlerBlockBaseWithInput.cs" />
+    <Compile Include="Blocks\EventsHandlerWithInput.cs" />
+    <Compile Include="Blocks\ExceptionsHandler.cs" />
+    <Compile Include="Blocks\ExceptionsHandlerWithInput.cs" />
+    <Compile Include="Blocks\QueryBlockWithInput.cs" />
+    <Compile Include="Blocks\StackBlockBase.cs" />
+    <Compile Include="BlockResult\BlockTraceResult.cs" />
+    <Compile Include="Events\OperationEvent.cs" />
+    <Compile Include="Events\OperationExceptionError.cs" />
+    <Compile Include="Infrastructure\AsyncHelper.cs" />
+    <Compile Include="Infrastructure\Extensions.cs" />
+    <Compile Include="OperationResult\CommandResult.cs" />
+    <Compile Include="OperationResult\QueryResult.cs" />
+    <Compile Include="OperationStackInternal.cs" />
+    <Compile Include="OperationStackOptions.cs" />
+    <Compile Include="_Obsolete\BlockFlowTarget.cs" />
+    <Compile Include="Blocks\EventsHandler.cs" />
+    <Compile Include="BlockSpecs\StackBlockSpecBase.cs" />
+    <Compile Include="Infrastructure\Emptyable.cs" />
+    <Compile Include="Infrastructure\Exceptions.cs" />
+    <Compile Include="Infrastructure\ExecutionTime.cs" />
+    <Compile Include="Interfaces\Interfaces.cs" />
+    <Compile Include="Blocks\QueryBlock.cs" />
+    <Compile Include="Events\OperationEvents.cs" />
+    <Compile Include="OperationResult\OperationResult.cs" />
     <Compile Include="OperationStack.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="BlockResult.cs" />
-    <Compile Include="ResultDispatcher.cs" />
-    <Compile Include="ResultProxy.cs" />
-    <Compile Include="StackBlockSpecCommand.cs" />
-    <Compile Include="StackBlockSpecEvent.cs" />
-    <Compile Include="StackBlockSpecQuery.cs" />
-    <Compile Include="StackEvents.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
+    <Compile Include="BlockResult\BlockResult.cs" />
+    <Compile Include="BlockResult\ResultDispatcher.cs" />
+    <Compile Include="BlockResult\ResultProxy.cs" />
+    <Compile Include="BlockSpecs\StackBlockSpecBuilder.cs" />
+    <Compile Include="_Obsolete\StackBlockSpecCommand.cs" />
+    <Compile Include="BlockSpecs\StackBlockSpecOperation.cs" />
+    <Compile Include="BlockSpecs\StackBlockSpecOperationStack.cs" />
+    <Compile Include="BlockSpecs\StackBlockSpecEvent.cs" />
+    <Compile Include="_Obsolete\StackBlockSpecQuery.cs" />
+    <Compile Include="Events\StackEvents.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
