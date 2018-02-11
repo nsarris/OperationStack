@@ -31,15 +31,15 @@ namespace DomainObjects.Operations
     public interface IQueryOperation<TState, TOperationEvent, TResult> : IQueryOperation<TOperationEvent, TResult>
         where TOperationEvent : IOperationEvent
     {
-        IQueryResult<TOperationEvent, TResult> ToResult(TState initialState);
-        Task<IQueryResult<TOperationEvent, TResult>> ToResultAsync(TState initialState);
+        IQueryResult<TState, TOperationEvent, TResult> ToResult(TState initialState);
+        Task<IQueryResult<TState, TOperationEvent, TResult>> ToResultAsync(TState initialState);
     }
 
     public interface ICommandOperation<TState, TOperationEvent> : ICommandOperation<TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
-        ICommandResult<TOperationEvent> ToResult(TState initialState);
-        Task<ICommandResult<TOperationEvent>> ToResultAsync(TState initialState);
+        ICommandResult<TState, TOperationEvent> ToResult(TState initialState);
+        Task<ICommandResult<TState, TOperationEvent>> ToResultAsync(TState initialState);
     }
 
 
@@ -269,25 +269,59 @@ namespace DomainObjects.Operations
     }
 
 
-    public interface IOperationResult<TOperationEvent>
-        where TOperationEvent : IOperationEvent
+    public interface IOperationResult
     {
         bool Success { get; }
-        IEnumerable<TOperationEvent> Events { get; }
+        object StackState { get; }
+        IEnumerable<IOperationEvent> Events { get; }
+    }
 
+    public interface ICommandResult : IOperationResult
+    {
+    }
+
+    public interface IQueryResult<T> : IOperationResult
+    {
+        Emptyable<T> Result { get; }
+    }
+
+    public interface IOperationResult<TOperationEvent> : IOperationResult
+        where TOperationEvent : IOperationEvent
+    {
+        new IEnumerable<TOperationEvent> Events { get; }
         IReadOnlyList<BlockTraceResult<TOperationEvent>> StackTrace { get; }
     }
 
-    public interface ICommandResult<TOperationEvent> : IOperationResult<TOperationEvent>
+    public interface ICommandResult<TOperationEvent> : ICommandResult,IOperationResult<TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
 
     }
 
-    public interface IQueryResult<TOperationEvent,T> : IOperationResult<TOperationEvent>
+    public interface IQueryResult<TOperationEvent,T> : IQueryResult<T>,IOperationResult<TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
-        Emptyable<T> Result { get; }
+        
+    }
+
+    public interface IOperationResult<TState, TOperationEvent> : IOperationResult
+        where TOperationEvent : IOperationEvent
+    {
+        new IEnumerable<TOperationEvent> Events { get; }
+        IReadOnlyList<BlockTraceResult<TOperationEvent>> StackTrace { get; }
+        new TState StackState { get; }
+    }
+
+    public interface ICommandResult<TState, TOperationEvent> : ICommandResult, ICommandResult<TOperationEvent>,  IOperationResult<TState,TOperationEvent>
+        where TOperationEvent : IOperationEvent
+    {
+
+    }
+
+    public interface IQueryResult<TState, TOperationEvent, T> : IQueryResult<T>, IQueryResult<TOperationEvent, T>, IOperationResult<TState, TOperationEvent>
+        where TOperationEvent : IOperationEvent
+    {
+
     }
 
     public interface IOperationEvent

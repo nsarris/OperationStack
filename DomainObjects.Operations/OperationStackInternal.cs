@@ -52,7 +52,7 @@ namespace DomainObjects.Operations
             return GetNext(blockSpec, target,ref state, initialState);
         }
 
-        private IOperationResult<TOperationEvent> ToResult<T>(bool isCommand, TState initialState)
+        private IOperationResult<TState, TOperationEvent> ToResult<T>(bool isCommand, TState initialState)
         {
 
             var state = initialState;
@@ -84,21 +84,21 @@ namespace DomainObjects.Operations
                 
             }
 
-            return isCommand ? new CommandResult<TOperationEvent>(success, stackTrace) : new QueryResult<TOperationEvent,T>(success, stackTrace, result.ConvertTo<T>());
+            return isCommand ? new CommandResult<TState, TOperationEvent>(success, stackTrace, state) : new QueryResult<TState, TOperationEvent,T>(success, stackTrace, state, result.ConvertTo<T>());
         }
 
-        public ICommandResult<TOperationEvent> ToResult(TState initialState)
+        public ICommandResult<TState, TOperationEvent> ToResult(TState initialState)
         {
-            return (ICommandResult<TOperationEvent>)ToResult<object>(true, initialState);
+            return (ICommandResult<TState, TOperationEvent>)ToResult<object>(true, initialState);
         }
 
-        public IQueryResult<TOperationEvent,T> ToResult<T>(TState initialState)
+        public IQueryResult<TState, TOperationEvent, T> ToResult<T>(TState initialState)
         {
-            return (IQueryResult<TOperationEvent,T>)ToResult<T>(false, initialState);
+            return (IQueryResult<TState, TOperationEvent, T>)ToResult<T>(false, initialState);
         }
 
 
-        private async Task<IOperationResult<TOperationEvent>> ToResultAsync<T>(bool isCommand, TState initialState)
+        private async Task<IOperationResult<TState, TOperationEvent>> ToResultAsync<T>(bool isCommand, TState initialState)
         {
             var stackTrace = new List<BlockTraceResult<TOperationEvent>>();
 
@@ -128,17 +128,17 @@ namespace DomainObjects.Operations
                 
             }
 
-            return isCommand ? new CommandResult<TOperationEvent>(success, stackTrace) : new QueryResult<TOperationEvent,T>(success, stackTrace, result.ConvertTo<T>());
+            return isCommand ? new CommandResult<TState, TOperationEvent>(success, stackTrace, state) : new QueryResult<TState, TOperationEvent, T>(success, stackTrace, state, result.ConvertTo<T>());
         }
 
-        public async Task<ICommandResult<TOperationEvent>> ToResultAsync(TState initialState)
+        public async Task<ICommandResult<TState, TOperationEvent>> ToResultAsync(TState initialState)
         {
-            return (ICommandResult<TOperationEvent>)(await ToResultAsync<object>(true, initialState));
+            return (ICommandResult<TState, TOperationEvent>)(await ToResultAsync<object>(true, initialState));
         }
 
-        public async Task<IQueryResult<TOperationEvent,T>> ToResultAsync<T>(TState initialState)
+        public async Task<IQueryResult<TState, TOperationEvent, T>> ToResultAsync<T>(TState initialState)
         {
-            return (IQueryResult<TOperationEvent,T>)(await ToResultAsync<T>(false,initialState));
+            return (IQueryResult<TState, TOperationEvent, T>)(await ToResultAsync<T>(false,initialState));
         }
 
         public StackBlockSpecBase<TState,TOperationEvent> GetNext(StackBlockSpecBase<TState,TOperationEvent> currentBlock, BlockResultTarget target, ref TState state, TState initialState)

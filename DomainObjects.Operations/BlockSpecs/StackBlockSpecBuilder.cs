@@ -86,6 +86,19 @@ namespace DomainObjects.Operations
             return new StackBlockSpecOperation<TState, TOperationEvent>(tag, index, (TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) => new CommandBlock<TState, TOperationEvent, Tin>(tag, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
         }
 
+        public StackBlockSpecBase<TState, TOperationEvent> BuildCommand(string tag, int index, ICommandOperation<TOperationEvent> operation)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TState, TOperationEvent>(tag, index, (TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
+                => new CommandBlock<TState, TOperationEvent>(tag, state, stackEvents, operation), BlockSpecTypes.Operation);
+        }
+
+        public StackBlockSpecBase<TState, TOperationEvent> BuildCommand(string tag, int index, ICommandOperation<TState, TOperationEvent> operation)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TState, TOperationEvent>(tag, index, (TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TState, TOperationEvent>(tag, state, stackEvents, operation), BlockSpecTypes.Operation);
+        }
 
 
 
@@ -163,6 +176,20 @@ namespace DomainObjects.Operations
         {
             tag = HandleOperationTagName(tag, index);
             return new StackBlockSpecOperation<TState, TOperationEvent>(tag, index, (TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) => new QueryBlock<TState, TOperationEvent, Tin, TResult>(tag, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
+        }
+
+        public StackBlockSpecBase<TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, IQueryOperation<TOperationEvent, TResult> operation)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TState, TOperationEvent>(tag, index, (TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TState, TOperationEvent, TResult>(tag, state, stackEvents, operation), BlockSpecTypes.Operation);
+        }
+
+        public StackBlockSpecBase<TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, IQueryOperation<TState, TOperationEvent, TResult> operation)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TState, TOperationEvent>(tag, index, (TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TState, TOperationEvent, TResult>(tag, state, stackEvents, operation), BlockSpecTypes.Operation);
         }
 
 

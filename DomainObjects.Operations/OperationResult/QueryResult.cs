@@ -2,13 +2,13 @@
 
 namespace DomainObjects.Operations
 {
-    public class QueryResult<TOperationEvent,T> : CommandResult<TOperationEvent>, IQueryResult<TOperationEvent,T>
+    public class QueryResult<TState, TOperationEvent,T> : CommandResult<TState, TOperationEvent>, IQueryResult<TState, TOperationEvent,T>
         where TOperationEvent : IOperationEvent
     {
         public Emptyable<T> Result { get; private set; }
 
-        public QueryResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, Emptyable<T> result)
-            : base(success, stackTrace)
+        public QueryResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TState stackState, Emptyable<T> result)
+            : base(success, stackTrace, stackState)
         {
             Result = result;
         }

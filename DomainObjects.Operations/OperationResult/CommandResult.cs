@@ -2,11 +2,11 @@
 
 namespace DomainObjects.Operations
 {
-    public class CommandResult<TOperationEvent> : OperationResult<TOperationEvent>, ICommandResult<TOperationEvent>
+    public class CommandResult<TState, TOperationEvent> : OperationResult<TState, TOperationEvent>, ICommandResult<TState, TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
-        public CommandResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace)
-            : base(success, stackTrace)
+        public CommandResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TState stackState)
+            : base(success, stackTrace, stackState)
         {
 
 

@@ -7,16 +7,23 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
 
-    public abstract class OperationResult<TOperationEvent> : IOperationResult<TOperationEvent>
+    public abstract class OperationResult<TState, TOperationEvent> : IOperationResult<TState, TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
         public bool Success { get; private set; }
         public IEnumerable<TOperationEvent> Events { get; private set; }
         public IReadOnlyList<BlockTraceResult<TOperationEvent>> StackTrace { get; private set; }
 
-        public OperationResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace)
+        public TState StackState { get; private set; } 
+
+        object IOperationResult.StackState => StackState;
+
+        IEnumerable<IOperationEvent> IOperationResult.Events => throw new NotImplementedException();
+
+        public OperationResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TState stackState)
         {
             Success = success;
+            StackState = stackState;
 
             StackTrace = new System.Collections.ObjectModel.ReadOnlyCollection<BlockTraceResult<TOperationEvent>>(
                 stackTrace

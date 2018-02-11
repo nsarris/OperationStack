@@ -31,7 +31,7 @@ namespace DomainObjects.Operations
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TState, TOperationEvent>, IQueryResult<TOperationEvent,TResult>> func)
             : base(tag, state, stackEvents)
         {
-            executor = () => { var r = func(this); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
+            executor = () => { var r = func(this); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
         }
 
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IQuery<TState, TOperationEvent>, Task<BlockResult<TResult>>> func)
@@ -49,10 +49,27 @@ namespace DomainObjects.Operations
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TState, TOperationEvent>, Task<IQueryResult<TOperationEvent,TResult>>> func)
             : base(tag, state, stackEvents)
         {
-            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
+            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
+        }
+
+        internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, IQueryOperation<TOperationEvent, TResult> queryOperation)
+            : base(tag, state, stackEvents)
+        {
+            if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
+                executor = () => { var r = queryOperation.ToResult(); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
+            else
+                executorAsync = async () => { var r = await queryOperation.ToResultAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
         }
 
 
+        internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, IQueryOperation<TState, TOperationEvent, TResult> queryOperation)
+            : base(tag, state, stackEvents)
+        {
+            if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
+                executor = () => { var r = queryOperation.ToResult(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value, r.Success); };
+            else
+                executorAsync = async () => { var r = await queryOperation.ToResultAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value, r.Success); };
+        }
 
 
         IQueryResultProxy<T,TState> IQuery<TState, TOperationEvent>.DefineResult<T>()
