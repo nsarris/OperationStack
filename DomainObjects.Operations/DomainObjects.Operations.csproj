@@ -63,6 +63,7 @@
     <Compile Include="Events\OperationExceptionError.cs" />
     <Compile Include="Infrastructure\AsyncHelper.cs" />
     <Compile Include="Infrastructure\Extensions.cs" />
+    <Compile Include="Interfaces\IResultDispatcher.cs" />
     <Compile Include="OperationResult\CommandResult.cs" />
     <Compile Include="OperationResult\QueryResult.cs" />
     <Compile Include="OperationStackInternal.cs" />

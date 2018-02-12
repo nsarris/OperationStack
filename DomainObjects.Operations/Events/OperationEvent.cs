@@ -20,7 +20,7 @@ namespace DomainObjects.Operations
 
     public class OperationEvent : IOperationEvent
     {
-        public bool IsHandled { get; set; }
+        public bool IsHandled { get; private set; }
 
         public bool IsError { get; protected set; }
 
@@ -39,12 +39,24 @@ namespace DomainObjects.Operations
             Exception = exception;
             IsError = true;
             IsHandled = !unhandled;
+            Message = exception.Message;
+            UserMessage = exception.Message;
         }
 
         public OperationEvent(string message)
         {
-            this.Message = message;
-            this.UserMessage = message;
+            Message = message;
+            UserMessage = message;
+        }
+
+        public void Handle()
+        {
+            IsHandled = true;
+        }
+
+        public void Throw()
+        {
+            IsHandled = false;
         }
     }
 }

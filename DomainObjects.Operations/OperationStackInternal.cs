@@ -34,13 +34,19 @@ namespace DomainObjects.Operations
               //  throw new OperationStackDeclarationException("Only a Finally or another UnhandledExceptionsHand block can follow an UnhandledExceptions block");
         }
 
-        private StackBlockSpecBase<TState,TOperationEvent> HandleBlockResultAndGetNext(StackBlockSpecBase<TState,TOperationEvent> blockSpec, List<BlockTraceResult<TOperationEvent>> stackTrace, StackBlockBase<TState,TOperationEvent> block, IBlockResult blockResult, ref IEmptyable input, ref IEmptyable result, ref TState state, TState initialState)
+        private StackBlockSpecBase<TState,TOperationEvent> HandleBlockResultAndGetNext(StackBlockSpecBase<TState,TOperationEvent> blockSpec, List<BlockTraceResult<TOperationEvent>> stackTrace, StackBlockBase<TState,TOperationEvent> block, IBlockResult blockResult, ref IEmptyable input, ref IEmptyable result, ref TState state, ref bool fail, TState initialState)
         {
             var target = ((BlockResultBase)blockResult).Target;
 
-            if (Options.EndOnException && block.Events.HasUnhandledErrors)
-                target = new BlockResultTarget { FlowTarget = BlockFlowTarget.End };
+            if (target.FlowTarget == BlockFlowTarget.Fail)
+                fail = true;
 
+            if (Options.EndOnException && block.Events.HasUnhandledErrors)
+            {
+                target = new BlockResultTarget { FlowTarget = BlockFlowTarget.Fail };
+                fail = true;
+            }
+            
             var time = ((BlockResultBase)blockResult).ExecutionTime;
 
             result = target.OverrideResult.IsEmpty ? blockResult.Result : target.OverrideResult;
@@ -54,36 +60,31 @@ namespace DomainObjects.Operations
 
         private IOperationResult<TState, TOperationEvent> ToResult<T>(bool isCommand, TState initialState)
         {
-
             var state = initialState;
             var input = Emptyable.Empty;
             var result = Emptyable.Empty;
-            var success = false;
+            var fail = false;
             var stackTrace = new List<BlockTraceResult<TOperationEvent>>();
-            var stackEvents = new StackEvents<TOperationEvent>();
-
+            
             var blockSpec = Blocks.FirstOrDefault();
 
             while (blockSpec != null)
             {
                 //Check if input is correct type and exception - Optionally check if next input type matches when using override input
-                var block = blockSpec.CreateBlock(state, stackEvents, input);
+                var block = blockSpec.CreateBlock(state, new StackEvents<TOperationEvent>(stackTrace.SelectMany(x => x.FlattenedEvents)), input);
 
                 if (!block.IsEmptyEventBlock)
                 {
                     var blockResult = block.Execute(Options.TimeMeasurement);
-                    stackEvents.AddRange(block.FlattenedEvents);
                     
                     state = block.StackState;
-                    blockSpec = HandleBlockResultAndGetNext(blockSpec, stackTrace, block, blockResult, ref input, ref result, ref state, initialState);
-                    success = blockResult.Success;
+                    blockSpec = HandleBlockResultAndGetNext(blockSpec, stackTrace, block, blockResult, ref input, ref result, ref state, ref fail, initialState);
                 }
                 else
                     blockSpec = GetNext(blockSpec, new BlockResultTarget() { OverrideInput = input }, ref state, initialState);
-
-                
             }
 
+            var success = !fail && !stackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled);
             return isCommand ? new CommandResult<TState, TOperationEvent>(success, stackTrace, state) : new QueryResult<TState, TOperationEvent,T>(success, stackTrace, state, result.ConvertTo<T>());
         }
 
@@ -105,29 +106,29 @@ namespace DomainObjects.Operations
             var state = initialState;
             var input = Emptyable.Empty;
             var result = Emptyable.Empty;
-            var success = false;
+            var fail = false;
             var blockSpec = Blocks.FirstOrDefault();
-            var stackEvents = new StackEvents<TOperationEvent>();
+            
 
             while (blockSpec != null)
             {
                 //Check if input is correct type and exception - Optionally check if next input type matches when using override input
-                var block = blockSpec.CreateBlock(state, stackEvents, input);
+                var block = blockSpec.CreateBlock(state, new StackEvents<TOperationEvent>(stackTrace.SelectMany(x => x.FlattenedEvents)), input);
 
                 if (!block.IsEmptyEventBlock)
                 {
                     //Check here for sync and configure await (no timemeasurement) for optimization
                     var blockResult = block.IsAsync ? await block.ExecuteAsync(Options.TimeMeasurement).ConfigureAwait(Options.TimeMeasurement) : block.Execute(Options.TimeMeasurement);
                     state = block.StackState;
-                    stackEvents.AddRange(block.FlattenedEvents);
-                    blockSpec = HandleBlockResultAndGetNext(blockSpec, stackTrace, block, blockResult, ref input, ref result, ref state, initialState);
-                    success = blockResult.Success;
+                    
+                    blockSpec = HandleBlockResultAndGetNext(blockSpec, stackTrace, block, blockResult, ref input, ref result, ref state,ref fail, initialState);
+                    //success = blockResult.Success;
                 }
                 else
                     blockSpec = GetNext(blockSpec, new BlockResultTarget() { OverrideInput = input }, ref state, initialState);
-                
             }
 
+            var success = !fail && !stackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled);
             return isCommand ? new CommandResult<TState, TOperationEvent>(success, stackTrace, state) : new QueryResult<TState, TOperationEvent, T>(success, stackTrace, state, result.ConvertTo<T>());
         }
 
@@ -141,6 +142,10 @@ namespace DomainObjects.Operations
             return (IQueryResult<TState, TOperationEvent, T>)(await ToResultAsync<T>(false,initialState));
         }
 
+        private Dictionary<string, StackBlockSpecBase<TState, TOperationEvent>> blockDictionaryByTag;
+
+
+
         public StackBlockSpecBase<TState,TOperationEvent> GetNext(StackBlockSpecBase<TState,TOperationEvent> currentBlock, BlockResultTarget target, ref TState state, TState initialState)
         {
             int next = -1;
@@ -149,11 +154,21 @@ namespace DomainObjects.Operations
                 case BlockFlowTarget.Return:
                     next = currentBlock.Index + 1;
                     break;
-                case BlockFlowTarget.Break:
-                    next = -1;
-                    break;
+                //case BlockFlowTarget.Break:
+                //    next = -1;
+                //    break;
                 case BlockFlowTarget.Goto:
-                    next = Blocks.Where(x => x.Tag == target.TargetTag).FirstOrDefault().Index;
+                    if (!string.IsNullOrEmpty(target.TargetTag))
+                    {
+                        if (blockDictionaryByTag == null) blockDictionaryByTag = Blocks.ToDictionary(x => x.Tag);
+                        if (!blockDictionaryByTag.TryGetValue(target.TargetTag, out var nextBlock))
+                            throw new OperationStackExecutionException("Block with tag " + target.TargetTag + " not found");
+                        next = nextBlock.Index;
+                    }
+                    else if (target.TargetIndex >= 0 && target.TargetIndex < Blocks.Count)
+                        next = target.TargetIndex;
+                    else
+                        throw new OperationStackExecutionException("Block with index " + target.TargetIndex+ " not found");
                     break;
                 case BlockFlowTarget.Retry:
                     return currentBlock;
@@ -167,7 +182,9 @@ namespace DomainObjects.Operations
                 case BlockFlowTarget.Skip:
                     next = next + 1 + target.TargetIndex;
                     break;
-                case BlockFlowTarget.End:
+                case BlockFlowTarget.Complete:
+                case BlockFlowTarget.Fail:
+                    //if (target.Error != null) Add Error / Success false
                     //var lastBlock = Blocks.Where(x => x.BlockType == BlockSpecTypes.UnhandledExceptionHandler || x.BlockType == BlockSpecTypes.Finally).FirstOrDefault();
                     var lastBlock = Blocks.Where(x => x.BlockType == BlockSpecTypes.Finally).FirstOrDefault();
                     if (currentBlock == Blocks.Last())

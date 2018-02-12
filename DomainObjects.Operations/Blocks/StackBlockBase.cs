@@ -8,7 +8,6 @@ namespace DomainObjects.Operations
 {
     public abstract class StackBlockBase<TState, TOperationEvent> : IStackBlock<TState, TOperationEvent>
         where TOperationEvent : IOperationEvent
-
     {
         public string Tag { get; private set; }
         public TState StackState { get; set; }
@@ -87,7 +86,7 @@ namespace DomainObjects.Operations
                 }
                 catch(Exception e)
                 {
-                    this.Events.Add(unhandledExceptionEventBuilder(e));
+                    this.Events.Throw(unhandledExceptionEventBuilder(e));
                     return new BlockResultVoid()
                     {
                         Target = new BlockResultTarget

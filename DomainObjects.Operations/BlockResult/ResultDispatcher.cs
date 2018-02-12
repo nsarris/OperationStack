@@ -9,52 +9,44 @@ namespace DomainObjects.Operations
 
     internal class ResultDispatcher<T, TState> : IResultDispatcher<T, TState>
     {
-        public ResultDispatcher()
-        {
-
-        }
-        public BlockResult<T> Break(bool success)
+        public BlockResult<T> Fail()
         {
             return new BlockResult<T>
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.Break,
+                    FlowTarget = BlockFlowTarget.Fail,
                 }
             };
         }
 
-        public BlockResult<T> End(bool success)
+        public BlockResult<T> Complete()
         {
             return new BlockResult<T>
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.End
+                    FlowTarget = BlockFlowTarget.Complete
                 }
             };
         }
 
-        public BlockResult<T> End(bool success, object overrideResult)
+        public BlockResult<T> Complete(object overrideResult)
         {
             return new BlockResult<T>
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.End,
+                    FlowTarget = BlockFlowTarget.Complete,
                     OverrideResult = Emptyable.Create(overrideResult)
                 }
             };
         }
 
-        public BlockResult<T> Goto(string tag, bool success = true)
+        public BlockResult<T> Goto(string tag)
         {
             return new BlockResult<T>
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Goto,
@@ -63,16 +55,11 @@ namespace DomainObjects.Operations
             };
         }
 
-        public BlockResult<T> Goto(string tag)
-        {
-            return Goto(tag, true);
-        }
-
-        public BlockResult<T> Goto(string tag, object overrideInput, bool success = true)
+      
+        public BlockResult<T> Goto(string tag, object overrideInput)
         {
             return new BlockResult<T>
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Goto,
@@ -81,16 +68,37 @@ namespace DomainObjects.Operations
                 }
             };
         }
-        public BlockResult<T> Goto(string tag, object overrideInput)
+
+        public BlockResult<T> Goto(int index)
         {
-            return Goto(tag, overrideInput, true);
+            return new BlockResult<T>
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Goto,
+                    TargetIndex = index
+                }
+            };
+        }
+
+
+        public BlockResult<T> Goto(int index, object overrideInput)
+        {
+            return new BlockResult<T>
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Goto,
+                    TargetIndex = index,
+                    OverrideInput = Emptyable.Create(overrideInput)
+                }
+            };
         }
 
         public BlockResult<T> Reset()
         {
             return new BlockResult<T>
             {
-                Success = true,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Reset
@@ -102,7 +110,6 @@ namespace DomainObjects.Operations
         {
             return new BlockResult<T>
             {
-                Success = true,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Reset,
@@ -115,7 +122,6 @@ namespace DomainObjects.Operations
         {
             return new BlockResult<T>
             {
-                Success = true,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Restart
@@ -123,22 +129,33 @@ namespace DomainObjects.Operations
             };
         }
 
-        //public BlockResult<T> Return()
-        //{
-        //    return new BlockResult<T>
-        //    {
-        //        Target = new BlockResultTarget
-        //        {
-        //            FlowTarget = BlockFlowTargets.Return
-        //        }
-        //    };
-        //}
-
-        public BlockResult<T> Return(T result, bool success = true)
+        public BlockResult<T> Retry()
         {
             return new BlockResult<T>
             {
-                Success = success,
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Retry,
+                }
+            };
+        }
+
+        public BlockResult<T> Retry(object overrideInput)
+        {
+            return new BlockResult<T>
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Retry,
+                    OverrideInput = Emptyable.Create(overrideInput)
+                }
+            };
+        }
+
+        public BlockResult<T> Return(T result)
+        {
+            return new BlockResult<T>
+            {
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Return,
@@ -147,46 +164,42 @@ namespace DomainObjects.Operations
             };
         }
 
-        public BlockResult<T> Return(T result)
-        {
-            return Return(result, true);
-        }
-
-        public BlockResult<T> Skip(int i, bool success = true)
-        {
-            return new BlockResult<T>
-            {
-                Success = success,
-                Target = new BlockResultTarget
-                {
-                    FlowTarget = BlockFlowTarget.Return,
-                    TargetIndex = i,
-                }
-            };
-        }
-
+        
         public BlockResult<T> Skip(int i)
         {
-            return Skip(i, true);
-        }
-
-        public BlockResult<T> Skip(int i, object overrideInput, bool success = true)
-        {
             return new BlockResult<T>
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.Return,
+                    FlowTarget = BlockFlowTarget.Skip,
                     TargetIndex = i,
-                    OverrideInput = Emptyable.Create(overrideInput)
                 }
             };
         }
 
         public BlockResult<T> Skip(int i, object overrideInput)
         {
-            return Skip(i, overrideInput, true);
+            return new BlockResult<T>
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Skip,
+                    TargetIndex = i,
+                    OverrideInput = Emptyable.Create(overrideInput)
+                }
+            };
+        }
+
+        public BlockResult<T> Fail(IOperationEvent error)
+        {
+            return new BlockResult<T>
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Fail,
+                    Error = error
+                }
+            };
         }
     }
 }

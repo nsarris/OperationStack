@@ -32,13 +32,13 @@ namespace DomainObjects.Operations
 
         public void Add(TOperationEvent @event)
         {
-            @event.IsHandled = true;
+            @event.Handle();
             this.events.Add(@event);
         }
 
         public void Throw(TOperationEvent @event)
         {
-            @event.IsHandled = false;
+            @event.Throw();
             this.events.Add(@event);
         }
 

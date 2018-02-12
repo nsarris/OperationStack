@@ -31,7 +31,7 @@ namespace DomainObjects.Operations
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TState, TOperationEvent>, IQueryResult<TOperationEvent,TResult>> func)
             : base(tag, state, stackEvents)
         {
-            executor = () => { var r = func(this); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
+            executor = () => { var r = func(this); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
         }
 
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IQuery<TState, TOperationEvent>, Task<BlockResult<TResult>>> func)
@@ -49,16 +49,16 @@ namespace DomainObjects.Operations
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TState, TOperationEvent>, Task<IQueryResult<TOperationEvent,TResult>>> func)
             : base(tag, state, stackEvents)
         {
-            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
+            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
         }
 
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, IQueryOperation<TOperationEvent, TResult> queryOperation)
             : base(tag, state, stackEvents)
         {
             if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
-                executor = () => { var r = queryOperation.ToResult(); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
+                executor = () => { var r = queryOperation.ToResult(); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
             else
-                executorAsync = async () => { var r = await queryOperation.ToResultAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value, r.Success); };
+                executorAsync = async () => { var r = await queryOperation.ToResultAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
         }
 
 
@@ -66,9 +66,9 @@ namespace DomainObjects.Operations
             : base(tag, state, stackEvents)
         {
             if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
-                executor = () => { var r = queryOperation.ToResult(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value, r.Success); };
+                executor = () => { var r = queryOperation.ToResult(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
             else
-                executorAsync = async () => { var r = await queryOperation.ToResultAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value, r.Success); };
+                executorAsync = async () => { var r = await queryOperation.ToResultAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
         }
 
 
@@ -89,19 +89,24 @@ namespace DomainObjects.Operations
 
 
 
-        BlockResult<T> IResultDispatcher<TState>.Break<T>(bool success)
+        BlockResult<T> IResultDispatcher<TState>.Fail<T>()
         {
-            return new ResultDispatcher<T,TState>().Break(success);
+            return new ResultDispatcher<T,TState>().Fail();
         }
 
-        BlockResult<T> IResultDispatcher<TState>.End<T>(bool success)
+        BlockResult<T> IResultDispatcher<TState>.Fail<T>(IOperationEvent error)
         {
-            return new ResultDispatcher<T,TState>().End(success);
+            return new ResultDispatcher<T, TState>().Fail(error);
         }
 
-        BlockResult<T> IResultDispatcher<TState>.End<T>(bool success, object overrideResult)
+        BlockResult<T> IResultDispatcher<TState>.Complete<T>()
         {
-            return new ResultDispatcher<T,TState>().End(success, overrideResult);
+            return new ResultDispatcher<T,TState>().Complete();
+        }
+
+        BlockResult<T> IResultDispatcher<TState>.Complete<T>(object overrideResult)
+        {
+            return new ResultDispatcher<T,TState>().Complete(overrideResult);
         }
 
         
@@ -121,39 +126,36 @@ namespace DomainObjects.Operations
             return new ResultDispatcher<T,TState>().Restart();
         }
 
-        BlockResult<T> IResultDispatcher<TState>.Return<T>(T result, bool success)
-        {
-            return new ResultDispatcher<T,TState>().Return(result, success);
-        }
+        
 
         BlockResult<T> IResultDispatcher<TState>.Return<T>(T result)
         {
             return new ResultDispatcher<T,TState>().Return(result);
         }
 
-        BlockResult<T> IResultDispatcher<TState>.Goto<T>(string tag, bool success)
-        {
-            return new ResultDispatcher<T,TState>().Goto(tag, success);
-        }
+  
 
         BlockResult<T> IResultDispatcher<TState>.Goto<T>(string tag)
         {
             return new ResultDispatcher<T,TState>().Goto(tag);
         }
 
-        BlockResult<T> IResultDispatcher<TState>.Goto<T>(string tag, object overrideInput, bool success)
-        {
-            return new ResultDispatcher<T,TState>().Goto(tag, overrideInput, success);
-        }
-
+    
         BlockResult<T> IResultDispatcher<TState>.Goto<T>(string tag, object overrideInput)
         {
             return new ResultDispatcher<T,TState>().Goto(tag, overrideInput);
         }
 
-        BlockResult<T> IResultDispatcher<TState>.Skip<T>(int i, bool success)
+
+        BlockResult<T> IResultDispatcher<TState>.Goto<T>(int index)
         {
-            return new ResultDispatcher<T,TState>().Skip(i, success);
+            return new ResultDispatcher<T, TState>().Goto(index);
+        }
+
+
+        BlockResult<T> IResultDispatcher<TState>.Goto<T>(int index, object overrideInput)
+        {
+            return new ResultDispatcher<T, TState>().Goto(index, overrideInput);
         }
 
         BlockResult<T> IResultDispatcher<TState>.Skip<T>(int i)
@@ -161,41 +163,52 @@ namespace DomainObjects.Operations
             return new ResultDispatcher<T,TState>().Skip(i);
         }
 
-        BlockResult<T> IResultDispatcher<TState>.Skip<T>(int i, object overrideInput, bool success)
-        {
-            return new ResultDispatcher<T,TState>().Skip(i, overrideInput, success);
-        }
+     
 
         BlockResult<T> IResultDispatcher<TState>.Skip<T>(int i, object overrideInput)
         {
             return new ResultDispatcher<T,TState>().Skip(i, overrideInput);
         }
 
-
-
-        BlockResult<TResult> IResultDispatcher<TResult,TState>.Return(TResult result, bool success)
+        BlockResult<T> IResultDispatcher<TState>.Retry<T>()
         {
-            return resultDispatcher.Return(result, success);
+            return new ResultDispatcher<T, TState>().Retry();
         }
+
+
+
+        BlockResult<T> IResultDispatcher<TState>.Retry<T>(object overrideInput)
+        {
+            return new ResultDispatcher<T, TState>().Retry(overrideInput);
+        }
+
+
+
+
 
         BlockResult<TResult> IResultDispatcher<TResult,TState>.Return(TResult result)
         {
             return resultDispatcher.Return(result);
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.End(bool success)
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Complete()
         {
-            return resultDispatcher.End(success);
+            return resultDispatcher.Complete();
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.End(bool success, object overrideResult)
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Complete(object overrideResult)
         {
-            return resultDispatcher.End(success, overrideResult);
+            return resultDispatcher.Complete( overrideResult);
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.Break(bool success)
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Fail()
         {
-            return resultDispatcher.Break(success);
+            return resultDispatcher.Fail();
+        }
+
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Fail(IOperationEvent error)
+        {
+            return resultDispatcher.Fail(error);
         }
 
         BlockResult<TResult> IResultDispatcher<TResult, TState>.Reset()
@@ -213,44 +226,53 @@ namespace DomainObjects.Operations
             return resultDispatcher.Restart();
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.Goto(string tag, bool success)
-        {
-            return resultDispatcher.Goto(tag, success);
-        }
+      
 
         BlockResult<TResult> IResultDispatcher<TResult, TState>.Goto(string tag)
         {
             return resultDispatcher.Goto(tag);
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.Goto(string tag, object overrideInput, bool success)
-        {
-            return resultDispatcher.Goto(tag, overrideInput, success);
-        }
+    
 
         BlockResult<TResult> IResultDispatcher<TResult, TState>.Goto(string tag, object overrideInput)
         {
             return resultDispatcher.Goto(tag, overrideInput);
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.Skip(int i, bool success)
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Goto(int index)
         {
-            return resultDispatcher.Skip(i, success);
+            return resultDispatcher.Goto(index);
         }
+
+
+
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Goto(int index, object overrideInput)
+        {
+            return resultDispatcher.Goto(index, overrideInput);
+        }
+
 
         BlockResult<TResult> IResultDispatcher<TResult, TState>.Skip(int i)
         {
             return resultDispatcher.Skip(i);
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.Skip(int i, object overrideInput, bool success)
-        {
-            return resultDispatcher.Skip(i, overrideInput, success);
-        }
-
+      
         BlockResult<TResult> IResultDispatcher<TResult, TState>.Skip(int i, object overrideInput)
         {
             return resultDispatcher.Skip(i, overrideInput);
+        }
+
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Retry()
+        {
+            return resultDispatcher.Retry();
+        }
+
+
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Retry(object overrideInput)
+        {
+            return resultDispatcher.Retry(overrideInput);
         }
     }
 

@@ -14,4 +14,13 @@ namespace DomainObjects.Operations
 
         }
     }
+
+    public class OperationStackExecutionException : Exception
+    {
+        public OperationStackExecutionException(string message)
+            : base(message)
+        {
+
+        }
+    }
 }

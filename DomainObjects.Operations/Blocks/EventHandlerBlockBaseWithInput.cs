@@ -11,22 +11,25 @@
 
         public Emptyable<Tin> Input { get; protected set; }
 
-        public BlockResult<Tin> Break(bool success)
+        public BlockResult<Tin> Fail()
         {
-            return resultDispather.Break(success);
+            return resultDispather.Fail();
         }
 
-        public BlockResult<Tin> End(bool success)
+        public BlockResult<Tin> Fail(IOperationEvent error)
         {
-            return resultDispather.End(success);
+            return resultDispather.Fail(error);
         }
 
-        public BlockResult<Tin> End(bool success, object overrideResult)
+        public BlockResult<Tin> Complete()
         {
-            return resultDispather.End(success, overrideResult);
+            return resultDispather.Complete();
         }
 
-
+        public BlockResult<Tin> Complete(object overrideResult)
+        {
+            return resultDispather.Complete(overrideResult);
+        }
 
         public BlockResult<Tin> Reset()
         {
@@ -42,40 +45,20 @@
         {
             return resultDispather.Restart();
         }
-
-        public BlockResult<Tin> Return(bool success)
-        {
-            return resultDispather.Return(Input.Value, success);
-        }
-
+        
         public BlockResult<Tin> Return()
         {
             return resultDispather.Return(Input.Value);
         }
-
-        public BlockResult<Tin> Return(Tin result, bool success)
-        {
-            return resultDispather.Return(result, success);
-        }
-
+        
         public BlockResult<Tin> Return(Tin result)
         {
             return resultDispather.Return(result);
         }
-
-        public BlockResult<Tin> Goto(string tag, bool success)
-        {
-            return resultDispather.Goto(tag, success);
-        }
-
+        
         public BlockResult<Tin> Goto(string tag)
         {
             return resultDispather.Goto(tag);
-        }
-
-        public BlockResult<Tin> Goto(string tag, object overrideInput, bool success)
-        {
-            return resultDispather.Goto(tag, overrideInput, success);
         }
 
         public BlockResult<Tin> Goto(string tag, object overrideInput)
@@ -83,24 +66,39 @@
             return resultDispather.Goto(tag, overrideInput);
         }
 
-        public BlockResult<Tin> Skip(int i, bool success = true)
+        public BlockResult<Tin> Goto(int index)
         {
-            return resultDispather.Skip(i, success);
+            return resultDispather.Goto(index);
+        }
+
+        public BlockResult<Tin> Goto(int index, object overrideInput)
+        {
+            return resultDispather.Goto(index, overrideInput);
         }
 
         public BlockResult<Tin> Skip(int i)
         {
             return resultDispather.Skip(i);
         }
-
-        public BlockResult<Tin> Skip(int i, object overrideInput, bool success = true)
-        {
-            return resultDispather.Skip(i, overrideInput, success);
-        }
-
+        
         public BlockResult<Tin> Skip(int i, object overrideInput)
         {
             return resultDispather.Skip(i, overrideInput);
+        }
+
+        public BlockResult<Tin> Retry()
+        {
+            return resultDispather.Retry();
+        }
+
+        public BlockResult<Tin> Retry(Tin overrideInput)
+        {
+            return resultDispather.Retry(overrideInput);
+        }
+
+        BlockResult<Tin> IResultDispatcher<Tin, TState>.Retry(object overrideInput)
+        {
+            return resultDispather.Retry(overrideInput);
         }
     }
 

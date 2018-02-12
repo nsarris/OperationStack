@@ -42,7 +42,7 @@ namespace DomainObjects.Operations
             if (filter != null)
                 events = events.Where(filter);
             var r =  events.ToList();
-            r.ForEach(x => x.IsHandled = true);
+            //r.ForEach(x => x.IsHandled = true);
             return r;
         }
 
@@ -54,7 +54,7 @@ namespace DomainObjects.Operations
             if (filter != null)
                 events = events.Where(filter);
             var r = events.ToList();
-            r.ForEach(x => x.Error.IsHandled = true);
+            //r.ForEach(x => x.Error.IsHandled = true);
             return r;
         }
 

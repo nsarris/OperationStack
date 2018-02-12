@@ -2,48 +2,56 @@
 {
     internal class ResultVoidDispatcher<TState> : IResultVoidDispatcher<TState>
     {
-        public BlockResultVoid Break(bool success)
+        public BlockResultVoid Fail()
         {
             return new BlockResultVoid
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.Break
+                    FlowTarget = BlockFlowTarget.Fail
                 }
             };
         }
 
-        public BlockResultVoid End(bool success)
+        public BlockResultVoid Fail(IOperationEvent error)
         {
             return new BlockResultVoid
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.End
+                    FlowTarget = BlockFlowTarget.Fail,
+                    Error = error
                 }
             };
         }
 
-        public BlockResultVoid End(bool success, object overrideResult)
+        public BlockResultVoid Complete()
         {
             return new BlockResultVoid
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
-                    FlowTarget = BlockFlowTarget.End,
+                    FlowTarget = BlockFlowTarget.Complete
+                }
+            };
+        }
+
+        public BlockResultVoid Complete(object overrideResult)
+        {
+            return new BlockResultVoid
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Complete,
                     OverrideResult = Emptyable.Create(overrideResult)
                 }
             };
         }
 
-        public BlockResultVoid Goto(string tag, bool success)
+        public BlockResultVoid Goto(string tag)
         {
             return new BlockResultVoid
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Goto,
@@ -52,16 +60,12 @@
             };
         }
 
-        public BlockResultVoid Goto(string tag)
-        {
-            return Goto(tag, true);
-        }
+        
 
-        public BlockResultVoid Goto(string tag, object overrideInput, bool success = true)
+        public BlockResultVoid Goto(string tag, object overrideInput)
         {
             return new BlockResultVoid
             {
-                Success = success,
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Goto,
@@ -71,10 +75,33 @@
             };
         }
 
-        public BlockResultVoid Goto(string tag, object overrideInput)
+        public BlockResultVoid Goto(int index)
         {
-            return Goto(tag, overrideInput, true);
+            return new BlockResultVoid
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Goto,
+                    TargetIndex = index
+                }
+            };
         }
+
+
+
+        public BlockResultVoid Goto(int index, object overrideInput)
+        {
+            return new BlockResultVoid
+            {
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Goto,
+                    TargetIndex = index,
+                    OverrideInput = Emptyable.Create(overrideInput)
+                }
+            };
+        }
+
 
         public BlockResultVoid Reset()
         {
@@ -83,7 +110,6 @@
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Reset,
-                    //State = null
                 }
             };
         }
@@ -112,11 +138,11 @@
             };
         }
 
-        public BlockResultVoid Return(bool success)
+        public BlockResultVoid Return()
         {
             return new BlockResultVoid
             {
-                Success = success,
+                
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Return
@@ -124,16 +150,13 @@
             };
         }
 
-        public BlockResultVoid Return()
-        {
-            return Return(true);
-        }
+     
 
-        public BlockResultVoid Skip(int i, bool success = true)
+        public BlockResultVoid Skip(int i)
         {
             return new BlockResultVoid
             {
-                Success = success,
+        
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Skip,
@@ -142,16 +165,13 @@
             };
         }
 
-        public BlockResultVoid Skip(int i)
-        {
-            return Skip(i, true);
-        }
+      
 
-        public BlockResultVoid Skip(int i, object overrideInput, bool success = true)
+        public BlockResultVoid Skip(int i, object overrideInput)
         {
             return new BlockResultVoid
             {
-                Success = success,
+                
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Skip,
@@ -161,9 +181,29 @@
             };
         }
 
-        public BlockResultVoid Skip(int i, object overrideInput)
+        public BlockResultVoid Retry()
         {
-            return Skip(i, overrideInput, true);
+            return new BlockResultVoid
+            {
+
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Retry,
+                }
+            };
+        }
+
+        public BlockResultVoid Retry(object overrideInput)
+        {
+            return new BlockResultVoid
+            {
+
+                Target = new BlockResultTarget
+                {
+                    FlowTarget = BlockFlowTarget.Retry,
+                    OverrideInput = Emptyable.Create(overrideInput)
+                }
+            };
         }
     }
 }

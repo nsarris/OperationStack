@@ -8,7 +8,7 @@ namespace DomainObjects.Operations
 {
     public class BlockResultBase
     {
-        public bool Success { get; internal set; }
+        //public bool Success { get; internal set; }
         internal BlockResultTarget Target { get; set; }
         internal ExecutionTime ExecutionTime { get; set; }
     }

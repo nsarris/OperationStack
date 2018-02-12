@@ -42,68 +42,7 @@ namespace DomainObjects.Operations
         Task<ICommandResult<TState, TOperationEvent>> ToResultAsync(TState initialState);
     }
 
-
-    public interface IResultDispatcher<T, TState>
-    {
-        //BlockResult<T> Return();
-        BlockResult<T> Return(T result, bool success);
-        BlockResult<T> Return(T result);
-        BlockResult<T> End(bool success);
-        BlockResult<T> End(bool success, object overrideResult);
-        BlockResult<T> Break(bool success);
-        BlockResult<T> Reset();
-        BlockResult<T> Reset(TState state);
-        BlockResult<T> Restart();
-        BlockResult<T> Goto(string tag, bool success);
-        BlockResult<T> Goto(string tag);
-        BlockResult<T> Goto(string tag, object overrideInput, bool success);
-        BlockResult<T> Goto(string tag, object overrideInput);
-        BlockResult<T> Skip(int i, bool success);
-        BlockResult<T> Skip(int i);
-        BlockResult<T> Skip(int i, object overrideInput, bool success);
-        BlockResult<T> Skip(int i, object overrideInput);
-    }
-
-    public interface IResultVoidDispatcher<TState>
-    {
-        BlockResultVoid Return(bool success = true);
-        BlockResultVoid Return();
-        BlockResultVoid End(bool success);
-        BlockResultVoid End(bool success, object overrideResult);
-        BlockResultVoid Break(bool success);
-        BlockResultVoid Reset();
-        BlockResultVoid Reset(TState state);
-        BlockResultVoid Restart();
-        BlockResultVoid Goto(string tag, bool success = true);
-        BlockResultVoid Goto(string tag);
-        BlockResultVoid Goto(string tag, object overrideInput, bool success = true);
-        BlockResultVoid Goto(string tag, object overrideInput);
-        BlockResultVoid Skip(int i, bool success = true);
-        BlockResultVoid Skip(int i);
-        BlockResultVoid Skip(int i, object overrideInput, bool success = true);
-        BlockResultVoid Skip(int i, object overrideInput);
-    }
-
-    public interface IResultDispatcher<TState>
-    {
-        //BlockResult<T> Return<T>();
-        BlockResult<T> Return<T>(T result, bool success = true);
-        BlockResult<T> Return<T>(T result);
-        BlockResult<T> End<T>(bool success);
-        BlockResult<T> End<T>(bool success, object overrideResult);
-        BlockResult<T> Break<T>(bool success);
-        BlockResult<T> Reset<T>();
-        BlockResult<T> Reset<T>(TState state);
-        BlockResult<T> Restart<T>();
-        BlockResult<T> Goto<T>(string tag, bool success = true);
-        BlockResult<T> Goto<T>(string tag);
-        BlockResult<T> Goto<T>(string tag, object overrideInput, bool success = true);
-        BlockResult<T> Goto<T>(string tag, object overrideInput);
-        BlockResult<T> Skip<T>(int i, bool success = true);
-        BlockResult<T> Skip<T>(int i);
-        BlockResult<T> Skip<T>(int i, object overrideInput, bool success = true);
-        BlockResult<T> Skip<T>(int i, object overrideInput);
-    }
+    
 
     public interface IStackEvents<TOperationEvent> : IEnumerable<TOperationEvent>
         where TOperationEvent : IOperationEvent
@@ -117,6 +56,7 @@ namespace DomainObjects.Operations
         where TOperationEvent : IOperationEvent
     {
         void Add(TOperationEvent @event);
+        void Throw(TOperationEvent @event);
         void Append(IEnumerable<TOperationEvent> events);
         bool HasUnhandledErrors { get; }
     }
@@ -211,7 +151,6 @@ namespace DomainObjects.Operations
         where TOperationEvent : IOperationEvent
     {
         Emptyable<T> Result { get; }
-        BlockResult<T> Return(bool success);
         BlockResult<T> Return();
     }
 
@@ -328,10 +267,12 @@ namespace DomainObjects.Operations
     {
         string Message { get; }
         string UserMessage { get; set; }
-        bool IsHandled { get; set; }
+        bool IsHandled { get; }
         bool IsError { get; }
         bool IsException { get; }
         Exception Exception { get; }
+        void Handle();
+        void Throw();
         //bool UnhandledException { get; }
     }
 
@@ -347,7 +288,7 @@ namespace DomainObjects.Operations
 
     public interface IBlockResult
     {
-        bool Success { get; }
+        //bool Success { get; }
         IEmptyable Result { get; }
     }
 
