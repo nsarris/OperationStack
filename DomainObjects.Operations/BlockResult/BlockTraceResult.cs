@@ -14,18 +14,19 @@ namespace DomainObjects.Operations
 
         public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace { get; private set; }
         public IEnumerable<TOperationEvent> FlattenedEvents => Events.Concat(InnerStackTrace.SelectMany(x => x.FlattenedEvents));
-        public BlockTraceResult(string tag, IEmptyable input, IEmptyable result, IEnumerable<TOperationEvent> events, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace = null, ExecutionTime time = null)
+        
+        internal BlockTraceResult(StackBlockBase<TOperationEvent> stackBlock, IBlockResult blockResult)
         {
-            Tag = tag;
-            Input = input;
-            Result = result;
-            InnerStackTrace = stackTrace ?? Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
-            Events = events;
-            
-            if (time == null)
+            Tag = stackBlock.Tag;
+            Input = stackBlock.Input;
+            Result = blockResult.GetEffectiveResult();
+            InnerStackTrace = stackBlock.InnerStackTrace ?? Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
+            Events = stackBlock.FlattenedEvents;
+
+            if (blockResult.ExecutionTime == null)
                 Time = new ExecutionTime();
             else
-                Time = time;
+                Time = blockResult.ExecutionTime;
         }
     }
 }

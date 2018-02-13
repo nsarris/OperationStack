@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class CommandBlock<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, ICommand<TState, TOperationEvent>
+    internal class CommandBlock<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, ICommand<TState, TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
         private ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();

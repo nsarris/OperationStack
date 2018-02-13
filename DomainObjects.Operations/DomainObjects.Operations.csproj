@@ -46,6 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlockResult\BlockResultTarget.cs" />
+    <Compile Include="BlockResult\BlockResultVoid.cs" />
+    <Compile Include="Interfaces\IBlockResult.cs" />
     <Compile Include="BlockResult\ResultVoidDispatcher.cs" />
     <Compile Include="Blocks\CommandBlock.cs" />
     <Compile Include="Blocks\CommandBlockWithInput.cs" />
@@ -59,6 +61,7 @@
     <Compile Include="Blocks\QueryBlockWithInput.cs" />
     <Compile Include="Blocks\StackBlockBase.cs" />
     <Compile Include="BlockResult\BlockTraceResult.cs" />
+    <Compile Include="Blocks\StackBlocks.cs" />
     <Compile Include="Events\OperationEvent.cs" />
     <Compile Include="Events\OperationExceptionError.cs" />
     <Compile Include="Infrastructure\AsyncHelper.cs" />
@@ -68,6 +71,7 @@
     <Compile Include="OperationResult\QueryResult.cs" />
     <Compile Include="OperationStackInternal.cs" />
     <Compile Include="OperationStackOptions.cs" />
+    <Compile Include="OperationStackExecutionState.cs" />
     <Compile Include="_Obsolete\BlockFlowTarget.cs" />
     <Compile Include="Blocks\EventsHandler.cs" />
     <Compile Include="BlockSpecs\StackBlockSpecBase.cs" />
@@ -86,7 +90,6 @@
     <Compile Include="BlockSpecs\StackBlockSpecBuilder.cs" />
     <Compile Include="_Obsolete\StackBlockSpecCommand.cs" />
     <Compile Include="BlockSpecs\StackBlockSpecOperation.cs" />
-    <Compile Include="BlockSpecs\StackBlockSpecOperationStack.cs" />
     <Compile Include="BlockSpecs\StackBlockSpecEvent.cs" />
     <Compile Include="_Obsolete\StackBlockSpecQuery.cs" />
     <Compile Include="Events\StackEvents.cs" />

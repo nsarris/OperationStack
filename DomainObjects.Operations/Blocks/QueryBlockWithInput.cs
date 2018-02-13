@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class QueryBlock<TState, TOperationEvent, Tin, TResult> : QueryBlock<TState, TOperationEvent, TResult>, IQuery<TState, TOperationEvent, Tin>, ITypedQuery<TState, TOperationEvent, Tin,TResult>
+    internal class QueryBlock<TState, TOperationEvent, Tin, TResult> : QueryBlock<TState, TOperationEvent, TResult>, IQuery<TState, TOperationEvent, Tin>, ITypedQuery<TState, TOperationEvent, Tin,TResult>
         where TOperationEvent : IOperationEvent
     {
-        public Emptyable<Tin> Input { get; private set; }
+        public new Emptyable<Tin> Input { get => (Emptyable<Tin>)base.Input; private set => base.Input = value; }
         
         internal QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, Func<IQuery<TState, TOperationEvent, Tin>, BlockResult<TResult>> func)
             : base(tag, state, stackEvents)

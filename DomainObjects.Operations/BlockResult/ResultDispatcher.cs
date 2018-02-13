@@ -154,13 +154,13 @@ namespace DomainObjects.Operations
 
         public BlockResult<T> Return(T result)
         {
-            return new BlockResult<T>
+            return new BlockResult<T>(result)
             {
                 Target = new BlockResultTarget
                 {
                     FlowTarget = BlockFlowTarget.Return,
                 },
-                Result = new Emptyable<T>(result)
+                //Result = new Emptyable<T>(result)
             };
         }
 

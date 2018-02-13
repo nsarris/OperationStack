@@ -1,10 +1,16 @@
-﻿1. Add resultDispatcher.Throw() => adds unhadled error or exception
-2. Add resultDispatcher.Retry()
+﻿DONE 1. Add resultDispatcher.Throw() => adds unhadled error or exception
+DONE 2. Add resultDispatcher.Retry()
 3. Rename resultDispatcher => resultBuilder
-4. Refactor dispatcher / result /target
+4. Refactor dispatcher / result /target to return object that can apply on state
 5. Test success flow (esp. on appended stacks)
 6. Refactor event handlers to pass through input 
-7. Manage success on event handlers (?)
+NOT Manage success on event handlers (?)
 8. Investigate if ToResult can take input other than state
 9. Clean up interfaces
 10. Refactor event handlers, add Catch, handle success flow
+11. Check partials/nested classes to cut down on generic type clutter
+12. Complete block handle logic (HandleBlockResultAndSetNext notes)
+13. Move execution to state object and rename
+14. Block tag default literals
+15. Append OperationStack 
+16. Replace IOperationEvent with OperationEvent

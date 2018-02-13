@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace DomainObjects.Operations
 {
-    public class ExceptionsHandler<TEvent, TException, TState, TOperationEvent> : EventHandlerBlockBase<TState, TOperationEvent>, IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent>
+    internal class ExceptionsHandler<TEvent, TException, TState, TOperationEvent> : EventHandlerBlockBase<TState, TOperationEvent>, IExceptionsErrorHandler<TEvent, TException, TState, TOperationEvent>
             where TException : Exception
             where TOperationEvent : IOperationEvent
             where TEvent : TOperationEvent

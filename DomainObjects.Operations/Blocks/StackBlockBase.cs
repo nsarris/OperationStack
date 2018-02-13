@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public abstract class StackBlockBase<TState, TOperationEvent> : IStackBlock<TState, TOperationEvent>
+    internal abstract class StackBlockBase<TOperationEvent> : IStackBlock<TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
         public string Tag { get; private set; }
-        public TState StackState { get; set; }
+        
         public IStackEvents<TOperationEvent> StackEvents { get; set; }
         public IOperationEvents<TOperationEvent> Events { get; private set; } = new OperationEvents<TOperationEvent>();
         public IEnumerable<TOperationEvent> FlattenedEvents => Events.Concat(innerStackTrace.SelectMany(x => x.FlattenedEvents));
@@ -19,10 +19,10 @@ namespace DomainObjects.Operations
         List<BlockTraceResult<TOperationEvent>> innerStackTrace = new List<BlockTraceResult<TOperationEvent>>();
         public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace => innerStackTrace.AsEnumerable();
         private Func<Exception, TOperationEvent> unhandledExceptionEventBuilder;
-        public StackBlockBase(string tag, TState state, IStackEvents<TOperationEvent> stackEvents)
+        internal virtual IEmptyable Input { get; set; } = Emptyable.Empty;
+        public StackBlockBase(string tag, IStackEvents<TOperationEvent> stackEvents)
         {
             Tag = tag;
-            StackState = state;
             StackEvents = stackEvents;
 
             var ctor = typeof(TOperationEvent).GetConstructor(new Type[] { typeof(Exception), typeof(bool) });
@@ -42,6 +42,16 @@ namespace DomainObjects.Operations
         
         internal IBlockResult Execute(bool measureTime = true)
         {
+            if (IsEmptyEventBlock)
+                return new BlockResultVoid()
+                {
+                    Target = new BlockResultTarget
+                    {
+                        FlowTarget = BlockFlowTarget.Return,
+                        OverrideInput = Input
+                    },
+                };
+
             System.Diagnostics.Stopwatch sw = null;
             if (measureTime)
             {
@@ -55,7 +65,7 @@ namespace DomainObjects.Operations
                 if (measureTime)
                 {
                     sw.Stop();
-                    ((BlockResultBase)result).ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                    result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
                 }
                 return result;
             }
@@ -78,11 +88,20 @@ namespace DomainObjects.Operations
 
         internal async Task<IBlockResult> ExecuteAsync(bool measureTime = true)
         {
+            if (IsEmptyEventBlock)
+                return new BlockResultVoid()
+                {
+                    Target = new BlockResultTarget
+                    {
+                        FlowTarget = BlockFlowTarget.Return,
+                        OverrideInput = Input
+                    },
+                };
             //Run with configure await false if no stopwatch (context) needed
-            if (!measureTime)
+            if (!measureTime && IsAsync)
                 try
                 {
-                    return IsAsync ? await executorAsync().ConfigureAwait(false) : executor();
+                    return await executorAsync().ConfigureAwait(false);
                 }
                 catch(Exception e)
                 {
@@ -110,7 +129,7 @@ namespace DomainObjects.Operations
                 if (measureTime)
                 {
                     sw.Stop();
-                    ((BlockResultBase)result).ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                    ((IBlockResult)result).ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
                 }
                 return result;
             }
@@ -132,5 +151,15 @@ namespace DomainObjects.Operations
         }
     }
 
+    internal abstract class StackBlockBase<TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TState, TOperationEvent>
+        where TOperationEvent : IOperationEvent
+    {
+        public StackBlockBase(string tag, TState state, IStackEvents<TOperationEvent> stackEvents) 
+            : base(tag, stackEvents)
+        {
+            StackState = state;
+        }
 
+        public TState StackState { get; set; }
+    }
 }

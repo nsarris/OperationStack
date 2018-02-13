@@ -1,6 +1,6 @@
 ﻿namespace DomainObjects.Operations
 {
-    public class EventHandlerBlockBase<TState, TOperationEvent, Tin> : StackBlockBase<TState, TOperationEvent>, IStackBlock<TState, TOperationEvent, Tin>, IResultDispatcher<Tin, TState>
+    internal class EventHandlerBlockBase<TState, TOperationEvent, Tin> : StackBlockBase<TState, TOperationEvent>, IStackBlock<TState, TOperationEvent, Tin>, IResultDispatcher<Tin, TState>
         where TOperationEvent : IOperationEvent
     {
         ResultDispatcher<Tin,TState> resultDispather = new ResultDispatcher<Tin,TState>();
@@ -9,7 +9,7 @@
             Input = input;
         }
 
-        public Emptyable<Tin> Input { get; protected set; }
+        public new Emptyable<Tin> Input { get => (Emptyable<Tin>)base.Input; protected set => base.Input = value; }
 
         public BlockResult<Tin> Fail()
         {

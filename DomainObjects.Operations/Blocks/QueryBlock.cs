@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
 
-    public class QueryBlock<TState, TOperationEvent,TResult> : StackBlockBase<TState, TOperationEvent>, IQuery<TState, TOperationEvent>, ITypedQuery<TState, TOperationEvent, TResult>
+    internal class QueryBlock<TState, TOperationEvent,TResult> : StackBlockBase<TState, TOperationEvent>, IQuery<TState, TOperationEvent>, ITypedQuery<TState, TOperationEvent, TResult>
         where TOperationEvent : IOperationEvent
     {
         private ResultDispatcher<TResult,TState> resultDispatcher = new ResultDispatcher<TResult,TState>();

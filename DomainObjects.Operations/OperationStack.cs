@@ -50,7 +50,7 @@ namespace DomainObjects.Operations
         internal OperationStack(IEnumerable<StackBlockSpecBase<TState,TOperationEvent>> blocks, OperationStackOptions options)
             : this(options)
         {
-            internalStack.Blocks = blocks.ToList();
+            internalStack.Blocks = new StackBlocks<TState,TOperationEvent>(blocks);
         }
 
         #endregion Ctor
@@ -610,7 +610,7 @@ namespace DomainObjects.Operations
         
         internal OperationStack(IEnumerable<StackBlockSpecBase<TState,TOperationEvent>> blocks, OperationStackOptions options)
         {
-            internalStack.Blocks = blocks.ToList();
+            internalStack.Blocks = new StackBlocks<TState, TOperationEvent>(blocks);
             internalStack.Options = options;
         }
 

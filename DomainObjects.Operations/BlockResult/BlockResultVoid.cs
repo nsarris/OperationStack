@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DomainObjects.Operations
+﻿namespace DomainObjects.Operations
 {
-
-    public sealed class BlockResult<T> : IBlockResult
+    public sealed class BlockResultVoid : IBlockResult
     {
-        internal BlockResult()
+        internal BlockResultVoid()
+            :base()
         {
-            Result = new Emptyable<T>();
-        }
-
-        internal BlockResult(Emptyable<T> result)
-        {
-            Result = result;
+            
         }
 
         internal BlockResultTarget Target { get; set; }
         internal ExecutionTime ExecutionTime { get; set; }
-        internal Emptyable<T> Result { get; private set; } = new Emptyable<T>();
+        internal IEmptyable Result { get; private set; } = Emptyable.Empty;
 
         BlockResultTarget IBlockResult.Target => Target;
 
@@ -33,7 +22,7 @@ namespace DomainObjects.Operations
         {
             return Target.OverrideResult.IsEmpty ?
                 Result :
-                Target.OverrideResult.ConvertTo<T>();
+                Target.OverrideResult.ConvertTo<object>();
         }
         internal IEmptyable GetNextInput()
         {
@@ -45,9 +34,5 @@ namespace DomainObjects.Operations
         IEmptyable IBlockResult.GetEffectiveResult() => GetEffectiveResult();
         
         IEmptyable IBlockResult.GetNextInput() => GetNextInput();
-
-        
-
-        
     }
 }

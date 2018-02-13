@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class CommandBlock<TState, TOperationEvent, Tin> : CommandBlock<TState, TOperationEvent>, ICommand<TState, TOperationEvent,Tin>
+    internal class CommandBlock<TState, TOperationEvent, Tin> : CommandBlock<TState, TOperationEvent>, ICommand<TState, TOperationEvent,Tin>
         where TOperationEvent : IOperationEvent
     {
-        public Emptyable<Tin> Input { get; private set; }
+        public new Emptyable<Tin> Input { get => (Emptyable<Tin>)base.Input; private set => base.Input = value; }
 
         internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, Func<ICommand<TState, TOperationEvent,Tin>, BlockResultVoid> func)
             : base(tag, state, stackEvents)

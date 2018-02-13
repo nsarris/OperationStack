@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
 
-    public class EventsHandler<TEvent, TState, TOperationEvent, Tin> : EventHandlerBlockBase<TState, TOperationEvent, Tin>, IEventsHandler<TEvent, TState, TOperationEvent, Tin>
+    internal class EventsHandler<TEvent, TState, TOperationEvent, Tin> : EventHandlerBlockBase<TState, TOperationEvent, Tin>, IEventsHandler<TEvent, TState, TOperationEvent, Tin>
             where TOperationEvent : IOperationEvent
             where TEvent : TOperationEvent
     {

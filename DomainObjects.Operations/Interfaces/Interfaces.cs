@@ -286,12 +286,6 @@ namespace DomainObjects.Operations
     }
 
 
-    public interface IBlockResult
-    {
-        //bool Success { get; }
-        IEmptyable Result { get; }
-    }
-
 
 
 }

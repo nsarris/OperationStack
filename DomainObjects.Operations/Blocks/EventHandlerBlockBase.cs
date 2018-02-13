@@ -1,6 +1,6 @@
 ﻿namespace DomainObjects.Operations
 {
-    public class EventHandlerBlockBase<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, IResultVoidDispatcher<TState>
+    internal class EventHandlerBlockBase<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, IResultVoidDispatcher<TState>
         where TOperationEvent : IOperationEvent
     {
         ResultVoidDispatcher<TState> resultDispather = new ResultVoidDispatcher<TState>();
