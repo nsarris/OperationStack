@@ -18,10 +18,11 @@ namespace DomainObjects.Operations
         public StackBlockSpecBase<TState, TOperationEvent> CurrentBlockSpec { get; private set; }
         OperationStackOptions options;
         StackBlocks<TState, TOperationEvent> blocks;
-        public bool GetSuccessState()
+        private bool GetSuccessState()
         {
             return !IsFail && !StackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled);
         }
+
         public OperationStackExecutionState(OperationStackOptions options, StackBlocks<TState, TOperationEvent> blocks, TState initialState)
         {
             this.options = options;
@@ -31,7 +32,10 @@ namespace DomainObjects.Operations
             State = initialState;
         }
 
-        //Check if input is compatible and address accordingly (Exception, Empty or Fail)
+        /// <summary>
+        /// Checks if input is compatible and address accordingly (Exception, Empty or Fail)
+        /// </summary>
+        /// <returns>False if stack in fail state and needs to end, true otherwise</returns>
         public bool AssertCurrentBlockInput()
         {
             if (CurrentBlockSpec.InputType != null)
@@ -58,6 +62,11 @@ namespace DomainObjects.Operations
             return true;
         }
 
+        /// <summary>
+        /// Handle current block result and set next block to execute
+        /// </summary>
+        /// <param name="block">The execution block</param>
+        /// <param name="blockResult">The execution block result</param>
         public void HandleBlockResultAndSetNext(StackBlockBase<TState, TOperationEvent> block, IBlockResult blockResult)
         {
             PreviousBlockSpec = CurrentBlockSpec;
@@ -88,7 +97,13 @@ namespace DomainObjects.Operations
             if (CurrentBlockSpec == null && OverrideResult.HasValue) blockResult.OverrideResult(OverrideResult);
         }
 
-        private StackBlockSpecBase<TState, TOperationEvent> GetNext(StackBlockSpecBase<TState, TOperationEvent> currentBlock, BlockResultTarget target)
+        /// <summary>
+        /// Gets then next block spec to execute
+        /// </summary>
+        /// <param name="currentBlock">The current block</param>
+        /// <param name="target">The next target</param>
+        /// <returns></returns>
+        private StackBlockSpecBase<TState, TOperationEvent> GetNext(StackBlockSpecBase<TState, TOperationEvent> currentBlock,BlockResultTarget target)
         {
             switch (target.FlowTarget)
             {
@@ -112,6 +127,12 @@ namespace DomainObjects.Operations
             }
         }
 
+        /// <summary>
+        /// Get the operation stack result
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="isCommand">Command or query flag</param>
+        /// <returns></returns>
         public IOperationResult<TState, TOperationEvent> GetResult<T>(bool isCommand)
         {
             return isCommand ?
