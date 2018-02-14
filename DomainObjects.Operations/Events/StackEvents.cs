@@ -35,18 +35,20 @@ namespace DomainObjects.Operations
             return events;
         }
 
-        public IEnumerable<TEvent> FilterUnhandled<TEvent>(Func<TEvent, bool> filter = null, bool markAsHandled = false)
+        public IEnumerable<TEvent> FilterUnhandled<TEvent>(Func<TEvent, bool> filter = null)
             where TEvent : TOperationEvent
         {
             var events = this.OfType<TEvent>().Where(x => !x.IsHandled);
             if (filter != null)
                 events = events.Where(filter);
             var r =  events.ToList();
-            //r.ForEach(x => x.IsHandled = true);
+            
             return r;
         }
 
-        public IEnumerable<IOperationExceptionError<TEvent, TException>> FilterUnhandledException<TEvent,TException>(Func<IOperationExceptionError<TEvent, TException>, bool> filter = null, bool markAsHandled = false) where TException : Exception where TEvent : TOperationEvent
+        public IEnumerable<IOperationExceptionError<TEvent, TException>> FilterUnhandledException<TEvent,TException>(Func<IOperationExceptionError<TEvent, TException>, bool> filter = null) 
+            where TException : Exception 
+            where TEvent : TOperationEvent
         {
             var events = this.OfType<TEvent>()
                 .Where(x => x.Exception is TException && !x.IsHandled)
@@ -54,7 +56,7 @@ namespace DomainObjects.Operations
             if (filter != null)
                 events = events.Where(filter);
             var r = events.ToList();
-            //r.ForEach(x => x.Error.IsHandled = true);
+            
             return r;
         }
 

@@ -34,11 +34,11 @@ namespace DomainObjects.Operations
 
         public string UserMessage { get; set; }
 
-        public OperationEvent(Exception exception, bool unhandled = false)
+        public OperationEvent(Exception exception)
         {
             Exception = exception;
             IsError = true;
-            IsHandled = !unhandled;
+            //IsHandled = !unhandled;
             Message = exception.Message;
             UserMessage = exception.Message;
         }
@@ -57,6 +57,11 @@ namespace DomainObjects.Operations
         public void Throw()
         {
             IsHandled = false;
+        }
+
+        public virtual void FromException(Exception e)
+        {
+            this.Exception = e;
         }
     }
 }

@@ -29,12 +29,18 @@ namespace DomainObjects.Operations
 
         IEmptyable IBlockResult.Result => Result;
 
-        internal IEmptyable GetEffectiveResult()
+        public void OverrideResult(IEmptyable result)
         {
-            return Target.OverrideResult.IsEmpty ?
-                Result :
-                Target.OverrideResult.ConvertTo<T>();
+            try
+            {
+                Result = result.ConvertTo<T>();
+            }
+            catch
+            {
+                //Handle?
+            }
         }
+
         internal IEmptyable GetNextInput()
         {
             return Target.OverrideInput.IsEmpty ?
@@ -42,7 +48,7 @@ namespace DomainObjects.Operations
                 Target.OverrideInput;
         }
 
-        IEmptyable IBlockResult.GetEffectiveResult() => GetEffectiveResult();
+        
         
         IEmptyable IBlockResult.GetNextInput() => GetNextInput();
 

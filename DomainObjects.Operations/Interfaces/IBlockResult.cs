@@ -6,6 +6,6 @@
         ExecutionTime ExecutionTime { get; set; }
         IEmptyable Result { get; }
         IEmptyable GetNextInput();
-        IEmptyable GetEffectiveResult();
+        void OverrideResult(IEmptyable result);
     }
 }

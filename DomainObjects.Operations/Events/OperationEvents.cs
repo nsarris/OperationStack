@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -50,6 +51,16 @@ namespace DomainObjects.Operations
         IEnumerator IEnumerable.GetEnumerator()
         {
             return this.events.GetEnumerator();
+        }
+
+        public void Add(Exception exception)
+        {
+            Add(ExceptionErrorBuilder<TOperationEvent>.Build(exception));
+        }
+
+        public void Throw(Exception exception)
+        {
+            Throw(ExceptionErrorBuilder<TOperationEvent>.Build(exception));
         }
 
         public bool HasUnhandledErrors

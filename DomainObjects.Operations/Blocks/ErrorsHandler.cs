@@ -12,7 +12,7 @@ namespace DomainObjects.Operations
         private ErrorsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<TError, bool> filter = null)
             : base(tag, state, stackEvents)
         {
-            errors = stackEvents.FilterUnhandled(filter, true);
+            errors = stackEvents.FilterUnhandled(filter);
             IsEmptyEventBlock = !errors.Any();
         }
 

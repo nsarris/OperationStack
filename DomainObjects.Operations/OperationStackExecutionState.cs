@@ -11,8 +11,10 @@ namespace DomainObjects.Operations
         public TState State { get; private set; }
         public IEmptyable NextInput { get; private set; } = Emptyable.Empty;
         public IEmptyable LastResult { get; private set; } = Emptyable.Empty;
+        private IEmptyable OverrideResult { get; set; } = Emptyable.Empty;
         public bool IsFail { get; private set; }
         public List<BlockTraceResult<TOperationEvent>> StackTrace { get; } = new List<BlockTraceResult<TOperationEvent>>();
+        public StackBlockSpecBase<TState, TOperationEvent> PreviousBlockSpec { get; private set; } 
         public StackBlockSpecBase<TState, TOperationEvent> CurrentBlockSpec { get; private set; }
         OperationStackOptions options;
         StackBlocks<TState, TOperationEvent> blocks;
@@ -29,8 +31,37 @@ namespace DomainObjects.Operations
             State = initialState;
         }
 
+        //Check if input is compatible and address accordingly (Exception, Empty or Fail)
+        public bool AssertCurrentBlockInput()
+        {
+            if (CurrentBlockSpec.InputType != null)
+            {
+                try
+                {
+                    NextInput = NextInput.ConvertTo(CurrentBlockSpec.InputType);
+                }
+                catch (Exception e)
+                {
+                    if (options.IncompatibleInputTypeBehaviour == IncompatibleInputTypeBehaviour.Exception)
+                        throw new OperationStackExecutionException("Invalid input coming from " + PreviousBlockSpec?.Tag ?? "unknwon" + " block and going into " + CurrentBlockSpec.Tag + " block. Exception was " + e.Message);
+                    else if (options.IncompatibleInputTypeBehaviour == IncompatibleInputTypeBehaviour.AssumeEmpty)
+                        NextInput = Emptyable.Empty;
+                    else if (options.IncompatibleInputTypeBehaviour == IncompatibleInputTypeBehaviour.Fail)
+                    {
+                        IsFail = true;
+                        var error = ExceptionErrorBuilder<TOperationEvent>.Build(new OperationStackExecutionException("Invalid input coming from " + PreviousBlockSpec?.Tag ?? "unknwon" + " block and going into " + CurrentBlockSpec.Tag + " block. Exception was " + e.Message));
+                        StackTrace.Add(new BlockTraceResult<TOperationEvent>(CurrentBlockSpec.Tag, error, NextInput));
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         public void HandleBlockResultAndSetNext(StackBlockBase<TState, TOperationEvent> block, IBlockResult blockResult)
         {
+            PreviousBlockSpec = CurrentBlockSpec;
+
             //Add to stack trace
             //Should we add trace to empty event blocks? To event blocks?
             StackTrace.Add(new BlockTraceResult<TOperationEvent>(block, blockResult));
@@ -41,16 +72,20 @@ namespace DomainObjects.Operations
                     block.StackState;
 
             //Check fail state
-            if (options.EndOnException && block.Events.HasUnhandledErrors)
+            if (options.FailOnException && block.Events.HasUnhandledErrors)
                 IsFail = true;
 
-            //Override input is only applicable on Complete. What happens when finally exists?
-            //result = target.OverrideResult.IsEmpty ? blockResult.Result : target.OverrideResult;
-
+            //Override result is only applicable on Complete. Cache here in case of finally
+            OverrideResult = blockResult.Target.OverrideResult;
+            
             //Set next input
             NextInput = blockResult.GetNextInput();//Get target.OverrideInput.IsEmpty ? blockResult.Result : target.OverrideInput;
-
+            
+            //Get next block to execute
             CurrentBlockSpec = IsFail ? blocks.GotoEnd(CurrentBlockSpec.Index) : GetNext(CurrentBlockSpec, blockResult.Target);
+
+            //If complete set overriden result if any
+            if (CurrentBlockSpec == null && OverrideResult.HasValue) blockResult.OverrideResult(OverrideResult);
         }
 
         private StackBlockSpecBase<TState, TOperationEvent> GetNext(StackBlockSpecBase<TState, TOperationEvent> currentBlock, BlockResultTarget target)

@@ -72,7 +72,7 @@ namespace ConsoleApp1
             var stack = new OperationStack(
                 new OperationStackOptions()
                 {
-                    EndOnException = true,
+                    FailOnException = true,
                     TimeMeasurement = false,
                 }
                 )

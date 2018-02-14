@@ -13,7 +13,7 @@ namespace DomainObjects.Operations
             : base(tag, state, input, stackEvents)
         {
             Input = input;
-            errors = stackEvents.FilterUnhandled(filter, true);
+            errors = stackEvents.FilterUnhandled(filter);
             IsEmptyEventBlock = !errors.Any();
         }
 

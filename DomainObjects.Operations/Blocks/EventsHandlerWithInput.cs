@@ -16,7 +16,7 @@ namespace DomainObjects.Operations
             : base(tag, state, input, stackEvents)
         {
             Input = input;
-            events = stackEvents.FilterUnhandled(filter, true);
+            events = stackEvents.FilterUnhandled(filter);
             IsEmptyEventBlock = !events.Any();
         }
 

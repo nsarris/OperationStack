@@ -10,6 +10,7 @@ namespace DomainObjects.Operations
         where TOperationEvent : IOperationEvent
     {
         Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
+        public override Type InputType => null;
         public StackBlockSpecEvent(int index, Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType = BlockSpecTypes.EventsHandler)
             : base("EventHandler " + index, index, blockType)
         {
@@ -21,5 +22,22 @@ namespace DomainObjects.Operations
             return blockBuilder(state, stackEvents, input);
         }
     }
-    
+
+    internal class StackBlockSpecEvent<TState, TOperationEvent, Tin> : StackBlockSpecBase<TState, TOperationEvent>
+        where TOperationEvent : IOperationEvent
+    {
+        Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
+        public override Type InputType => typeof(Tin);
+        public StackBlockSpecEvent(int index, Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType = BlockSpecTypes.EventsHandler)
+            : base("EventHandler " + index, index, blockType)
+        {
+            this.blockBuilder = blockBuilder;
+        }
+
+        public override StackBlockBase<TState, TOperationEvent> CreateBlock(TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        {
+            return blockBuilder(state, stackEvents, input);
+        }
+    }
+
 }

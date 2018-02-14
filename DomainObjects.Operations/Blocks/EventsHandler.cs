@@ -16,7 +16,7 @@ namespace DomainObjects.Operations
         private EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<TEvent, bool> filter = null)
             : base(tag, state, stackEvents)
         {
-            events = stackEvents.FilterUnhandled(filter, true);
+            events = stackEvents.FilterUnhandled(filter);
             IsEmptyEventBlock = !events.Any();
         }
 

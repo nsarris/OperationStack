@@ -13,6 +13,7 @@ namespace DomainObjects.Operations
         object Value { get; }
         Type UnderlyingType { get; }
         Emptyable<Tout> ConvertTo<Tout>();
+        IEmptyable ConvertTo(Type type);
     }
 
     [System.Diagnostics.DebuggerDisplay("{IsEmpty ? this : (object)Value}")]
@@ -91,6 +92,19 @@ namespace DomainObjects.Operations
             return e;
         }
 
+        public IEmptyable ConvertTo(Type type)
+        {
+            if (!IsEmpty)
+            {
+                if (typeof(T) == type)
+                    return Emptyable.Create(value);
+                else
+                    return Emptyable.Create(Convert.ChangeType(value, type));
+            }
+            else
+                return Emptyable.Create(type);
+        }
+
         //internal class EmptyableDebuggerTypeProxy
         //{
         //    private Emptyable<T> e;
@@ -128,6 +142,12 @@ namespace DomainObjects.Operations
             else
                 return (IEmptyable)Activator.CreateInstance(typeof(Emptyable<>).MakeGenericType(new[] { value.GetType() }), new object[] { value });
         }
+
+        public static IEmptyable Create(Type type)
+        {
+            return (IEmptyable)Activator.CreateInstance(typeof(Emptyable<>).MakeGenericType(new[] { type }), new object[] { });
+        }
+
         public static Type GetUnderlyingType(Type emptyableTyle)
         {
             if (!emptyableTyle.IsGenericType || emptyableTyle.GetGenericTypeDefinition() != typeof(Emptyable<>))

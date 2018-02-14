@@ -18,17 +18,14 @@ namespace DomainObjects.Operations
         public bool IsAsync => executorAsync != null;
         List<BlockTraceResult<TOperationEvent>> innerStackTrace = new List<BlockTraceResult<TOperationEvent>>();
         public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace => innerStackTrace.AsEnumerable();
-        private Func<Exception, TOperationEvent> unhandledExceptionEventBuilder;
+        
         internal virtual IEmptyable Input { get; set; } = Emptyable.Empty;
         public StackBlockBase(string tag, IStackEvents<TOperationEvent> stackEvents)
         {
             Tag = tag;
             StackEvents = stackEvents;
 
-            var ctor = typeof(TOperationEvent).GetConstructor(new Type[] { typeof(Exception), typeof(bool) });
-            var param1 = Expression.Parameter(typeof(Exception));
-            var l = Expression.Lambda<Func<Exception, TOperationEvent>>(Expression.New(ctor, param1, Expression.Constant(true)), param1);
-            unhandledExceptionEventBuilder = l.Compile();
+            
         }
         
         protected Func<IBlockResult> executor;
@@ -71,7 +68,7 @@ namespace DomainObjects.Operations
             }
             catch(Exception e)
             {
-                this.Events.Add(unhandledExceptionEventBuilder(e));
+                this.Events.Add(e);
                 var result = new BlockResultVoid()
                 {
                     Target = new BlockResultTarget
@@ -105,7 +102,7 @@ namespace DomainObjects.Operations
                 }
                 catch(Exception e)
                 {
-                    this.Events.Throw(unhandledExceptionEventBuilder(e));
+                    this.Events.Throw(e);
                     return new BlockResultVoid()
                     {
                         Target = new BlockResultTarget
@@ -135,7 +132,7 @@ namespace DomainObjects.Operations
             }
             catch (Exception e)
             {
-                this.Events.Add(unhandledExceptionEventBuilder(e));
+                this.Events.Add(e);
                 var result = new BlockResultVoid()
                 {
                     Target = new BlockResultTarget

@@ -19,7 +19,7 @@ namespace DomainObjects.Operations
         {
             Tag = stackBlock.Tag;
             Input = stackBlock.Input;
-            Result = blockResult.GetEffectiveResult();
+            Result = blockResult.Result;
             InnerStackTrace = stackBlock.InnerStackTrace ?? Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
             Events = stackBlock.FlattenedEvents;
 
@@ -27,6 +27,15 @@ namespace DomainObjects.Operations
                 Time = new ExecutionTime();
             else
                 Time = blockResult.ExecutionTime;
+        }
+
+        internal BlockTraceResult(string tag, TOperationEvent error, IEmptyable input)
+        {
+            Tag = tag;
+            Events = new[] { error };
+            Input = input;
+            InnerStackTrace = Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
+            Time = new ExecutionTime();
         }
     }
 }

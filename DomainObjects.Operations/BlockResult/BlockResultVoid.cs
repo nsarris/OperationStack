@@ -18,20 +18,17 @@
 
         IEmptyable IBlockResult.Result => Result;
 
-        internal IEmptyable GetEffectiveResult()
+        public void OverrideResult(IEmptyable result)
         {
-            return Target.OverrideResult.IsEmpty ?
-                Result :
-                Target.OverrideResult.ConvertTo<object>();
+            Result = result;
         }
+
         internal IEmptyable GetNextInput()
         {
             return Target.OverrideInput.IsEmpty ?
                 Result :
                 Target.OverrideInput;
         }
-
-        IEmptyable IBlockResult.GetEffectiveResult() => GetEffectiveResult();
         
         IEmptyable IBlockResult.GetNextInput() => GetNextInput();
     }

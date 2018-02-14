@@ -30,7 +30,9 @@ namespace DomainObjects.Operations
             
             while (executionState.CurrentBlockSpec != null)
             {
-                //Check if input is correct type and exception - Optionally check if next input type matches when using override input
+                if (!executionState.AssertCurrentBlockInput())
+                    break;
+
                 var block = executionState.CurrentBlockSpec.CreateBlock(executionState.State, new StackEvents<TOperationEvent>(executionState.StackTrace.SelectMany(x => x.FlattenedEvents)), executionState.NextInput);
                 var blockResult = block.Execute(Options.TimeMeasurement);
 
@@ -46,11 +48,14 @@ namespace DomainObjects.Operations
 
             while (executionState.CurrentBlockSpec != null)
             {
-                //Check if input is correct type and exception - Optionally check if next input type matches when using override input
+                if (!executionState.AssertCurrentBlockInput())
+                    break;
+                
                 var block = executionState.CurrentBlockSpec.CreateBlock(executionState.State, new StackEvents<TOperationEvent>(executionState.StackTrace.SelectMany(x => x.FlattenedEvents)), executionState.NextInput);
                 var blockResult = await block.ExecuteAsync(Options.TimeMeasurement);
 
                 executionState.HandleBlockResultAndSetNext(block, blockResult);
+                
             }
             return executionState.GetResult<T>(isCommand);
         }

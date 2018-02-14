@@ -48,15 +48,17 @@ namespace DomainObjects.Operations
         where TOperationEvent : IOperationEvent
     {
         IEnumerable<TEvent> Filter<TEvent>(Func<TEvent, bool> filter = null) where TEvent : TOperationEvent;
-        IEnumerable<TEvent> FilterUnhandled<TEvent>(Func<TEvent, bool> filter = null, bool markAsHandled = false) where TEvent : TOperationEvent;
-        IEnumerable<IOperationExceptionError<TEvent, TException>> FilterUnhandledException<TEvent,TException>(Func<IOperationExceptionError<TEvent, TException>, bool> filter = null, bool markAsHandled = false) where TException : Exception where TEvent : TOperationEvent;
+        IEnumerable<TEvent> FilterUnhandled<TEvent>(Func<TEvent, bool> filter = null) where TEvent : TOperationEvent;
+        IEnumerable<IOperationExceptionError<TEvent, TException>> FilterUnhandledException<TEvent,TException>(Func<IOperationExceptionError<TEvent, TException>, bool> filter = null) where TException : Exception where TEvent : TOperationEvent;
     }
 
     public interface IOperationEvents<TOperationEvent> : IEnumerable<TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
         void Add(TOperationEvent @event);
+        void Add(Exception exception);
         void Throw(TOperationEvent @event);
+        void Throw(Exception exception);
         void Append(IEnumerable<TOperationEvent> events);
         bool HasUnhandledErrors { get; }
     }
@@ -273,7 +275,7 @@ namespace DomainObjects.Operations
         Exception Exception { get; }
         void Handle();
         void Throw();
-        //bool UnhandledException { get; }
+        void FromException(Exception e);
     }
 
     

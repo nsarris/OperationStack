@@ -26,6 +26,7 @@ namespace DomainObjects.Operations
         public string Tag { get; private set; }
         public int Index { get; private set; }
         public BlockSpecTypes BlockType { get; private set; }
+        public abstract Type InputType { get; }
         public abstract StackBlockBase<TState, TOperationEvent> CreateBlock(TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input);
 
         public StackBlockSpecBase(int index, BlockSpecTypes blockType)
