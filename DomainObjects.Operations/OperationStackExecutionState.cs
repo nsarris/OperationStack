@@ -86,7 +86,10 @@ namespace DomainObjects.Operations
 
             //Override result is only applicable on Complete. Cache here in case of finally
             OverrideResult = blockResult.Target.OverrideResult;
-            
+
+            //Set last result
+            LastResult = blockResult.Result;
+
             //Set next input
             NextInput = blockResult.GetNextInput();//Get target.OverrideInput.IsEmpty ? blockResult.Result : target.OverrideInput;
             

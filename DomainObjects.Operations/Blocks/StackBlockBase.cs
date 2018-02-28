@@ -68,7 +68,7 @@ namespace DomainObjects.Operations
             }
             catch(Exception e)
             {
-                this.Events.Add(e);
+                this.Events.Throw(e);
                 var result = new BlockResultVoid()
                 {
                     Target = new BlockResultTarget
@@ -132,7 +132,7 @@ namespace DomainObjects.Operations
             }
             catch (Exception e)
             {
-                this.Events.Add(e);
+                this.Events.Throw(e);
                 var result = new BlockResultVoid()
                 {
                     Target = new BlockResultTarget

@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{AE0A4EBB-20F9-4AAE-8802-BC4C36A8438E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DomainObjects.Operations", "DomainObjects.Operations\DomainObjects.Operations.csproj", "{81A9F44A-7C51-4BA8-B498-134D9C82B84A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationStack.Tests", "OperationStack.Tests\OperationStack.Tests.csproj", "{08811329-434B-407C-960C-87BB75D8DE52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{81A9F44A-7C51-4BA8-B498-134D9C82B84A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81A9F44A-7C51-4BA8-B498-134D9C82B84A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81A9F44A-7C51-4BA8-B498-134D9C82B84A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08811329-434B-407C-960C-87BB75D8DE52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08811329-434B-407C-960C-87BB75D8DE52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08811329-434B-407C-960C-87BB75D8DE52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08811329-434B-407C-960C-87BB75D8DE52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

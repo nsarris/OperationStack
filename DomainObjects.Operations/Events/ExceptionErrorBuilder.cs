@@ -34,12 +34,12 @@ namespace DomainObjects.Operations
                     ctor = typeof(TOperationEvent).GetConstructor(new Type[] { });
                     var l = Expression.Lambda<Func<TOperationEvent>>(Expression.New(ctor));
                     var f = l.Compile();
-                    Func<Exception, TOperationEvent> r = (Exception e) =>
+                    TOperationEvent r(Exception e)
                     {
                         var o = f();
                         o.FromException(e);
                         return o;
-                    };
+                    }
                     return r;
                 }
             });

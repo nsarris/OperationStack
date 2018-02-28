@@ -245,11 +245,9 @@ namespace DomainObjects.Operations
         
     }
 
-    public interface IOperationResult<TState, TOperationEvent> : IOperationResult
+    public interface IOperationResult<TState, TOperationEvent> : IOperationResult<TOperationEvent>
         where TOperationEvent : IOperationEvent
     {
-        new IEnumerable<TOperationEvent> Events { get; }
-        IReadOnlyList<BlockTraceResult<TOperationEvent>> StackTrace { get; }
         new TState StackState { get; }
     }
 
