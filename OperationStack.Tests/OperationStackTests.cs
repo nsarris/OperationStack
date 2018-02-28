@@ -1,6 +1,7 @@
 ﻿using DomainObjects.Operations;
 using NUnit.Framework;
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace OperationStack.Tests
@@ -52,18 +53,115 @@ namespace OperationStack.Tests
         [Test]
         public void HandleExceptions()
         {
-            var handleExceptionOs = new OperationStack<object, OperationEvent>()
+            var handledExceptionOs = new OperationStack<object, OperationEvent>(new OperationStackOptions()
+            {
+                FailOnException = false
+            })
                 .Then(op =>
                 {
                     throw new Exception();
                     return op.Return();
                 })
-                .OnErrors(h => 
+                .OnUnhandledExceptions(h =>
                 {
-                    Assert.AreEqual(1, h.Errors.Count());
+                    Assert.AreEqual(1, h.ExceptionErrors.Count());
+                    foreach (var e in h.ExceptionErrors)
+                    {
+                        e.Error.Handle();
+                    }
                     return h.Return();
-                });
-            Assert.Pass();
+                })
+                .ToResult();
+
+            Assert.True(handledExceptionOs.Success);
+            Assert.True(handledExceptionOs.Events.All(e => e.IsHandled));
+        }
+
+        [Test]
+        public void UnhandledExceptions()
+        {
+            var unhandledExceptionOs = new OperationStack<object, OperationEvent>()
+                .Then(op =>
+                {
+                    throw new Exception();
+                    return op.Return();
+                })
+                .ThenReturn(op =>
+                {
+                    return op.Return(42);
+                })
+                .Then(op =>
+                {
+                    throw new Exception();
+                    return op.Return();
+                })
+                .ToResult();
+
+            Assert.False(unhandledExceptionOs.Success);
+            Assert.False(unhandledExceptionOs.Events.All(e => e.IsHandled));
+        }
+
+        [Test]
+        public void EventsErrorsExceptionsTest()
+        {
+            var os = new OperationStack<object, OperationEvent>()
+                .Then(op =>
+                {
+                    throw new Exception();
+                    return op.Return();
+                })
+                .OnErrors(h =>
+                {
+                    Assert.False(h.Errors.All(e => e.IsHandled));
+                    foreach (var e in h.Errors)
+                    {
+                        e.Handle();
+                    }
+                })
+                .OnUnhandledExceptions(h =>
+                {
+                    Assert.True(h.ExceptionErrors.All(e => e.Error.IsHandled));
+                    return h.Return();
+                })
+                .Then(op =>
+                {
+                    var oe = new OperationEvent("Test event");
+                })
+                .OnEvents(h =>
+                {
+                    Assert.True(h.Events.All(e => e.IsHandled));
+                    return h.Return();
+                })
+                .Then(op =>
+                {
+                    var oe = new OperationEvent(new Exception());
+                })
+                .OnEvents(h =>
+                {
+                    Assert.True(h.Events.All(e => e.IsHandled));
+                    return h.Return();
+                })
+                .Then(op =>
+                {
+                    var oe = new OperationEvent("Test event");
+                    oe.Throw();
+                    return op.Return();
+                })
+                .OnErrors(h =>
+                {
+                    Assert.False(h.Errors.All(e => e.IsHandled));
+                    return h.Return();
+                })
+                .OnUnhandledExceptions(h =>
+                {
+                    foreach (var e in h.ExceptionErrors)
+                    {
+                        e.Error.Handle();
+                    }
+                })
+                .ToResult();
+
+            Assert.True(os.Events.All(e => e.IsHandled));
         }
     }
 }

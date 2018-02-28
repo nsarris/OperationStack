@@ -36,9 +36,9 @@ namespace DomainObjects.Operations
 
         public OperationEvent(Exception exception)
         {
-            Exception = exception;
+            //IsHandled = false;
             IsError = true;
-            //IsHandled = !unhandled;
+            Exception = exception;
             Message = exception.Message;
             UserMessage = exception.Message;
         }
@@ -56,6 +56,8 @@ namespace DomainObjects.Operations
 
         public void Throw()
         {
+            if (!IsError)
+                throw new Exception("Cannot throw an OperationEvent that is not an error");
             IsHandled = false;
         }
 
