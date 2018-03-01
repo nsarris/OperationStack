@@ -5,7 +5,7 @@ using System.Linq;
 namespace DomainObjects.Operations
 {
     internal class OperationStackExecutionState<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public TState InitialState { get; private set; }
         public TState State { get; private set; }

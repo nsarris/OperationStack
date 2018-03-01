@@ -18,7 +18,7 @@ namespace DomainObjects.Operations
         Error
     }
 
-    public class OperationEvent : IOperationEvent
+    public class OperationEvent 
     {
         public bool IsHandled { get; private set; }
 

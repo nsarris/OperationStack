@@ -7,7 +7,7 @@
         BlockResult<T> Complete();
         BlockResult<T> Complete(object overrideResult);
         BlockResult<T> Fail();
-        BlockResult<T> Fail(IOperationEvent error);
+        BlockResult<T> Fail(OperationEvent error);
         BlockResult<T> Reset();
         BlockResult<T> Reset(TState state);
         BlockResult<T> Restart();
@@ -27,7 +27,7 @@
         BlockResultVoid Complete();
         BlockResultVoid Complete(object overrideResult);
         BlockResultVoid Fail();
-        BlockResultVoid Fail(IOperationEvent error);
+        BlockResultVoid Fail(OperationEvent error);
         BlockResultVoid Reset();
         BlockResultVoid Reset(TState state);
         BlockResultVoid Restart();
@@ -48,7 +48,7 @@
         BlockResult<T> Complete<T>();
         BlockResult<T> Complete<T>(object overrideResult);
         BlockResult<T> Fail<T>();
-        BlockResult<T> Fail<T>(IOperationEvent error);
+        BlockResult<T> Fail<T>(OperationEvent error);
         BlockResult<T> Reset<T>();
         BlockResult<T> Reset<T>(TState state);
         BlockResult<T> Restart<T>();

@@ -190,7 +190,7 @@ namespace DomainObjects.Operations
             };
         }
 
-        public BlockResult<T> Fail(IOperationEvent error)
+        public BlockResult<T> Fail(OperationEvent error)
         {
             return new BlockResult<T>
             {

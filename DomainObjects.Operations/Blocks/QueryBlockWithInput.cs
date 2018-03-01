@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     internal class QueryBlock<TState, TOperationEvent, Tin, TResult> : QueryBlock<TState, TOperationEvent, TResult>, IQuery<TState, TOperationEvent, Tin>, ITypedQuery<TState, TOperationEvent, Tin,TResult>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public new Emptyable<Tin> Input { get => (Emptyable<Tin>)base.Input; private set => base.Input = value; }
         

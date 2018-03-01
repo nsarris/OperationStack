@@ -14,7 +14,7 @@ namespace DomainObjects.Operations
     /// <typeparam name="TState">Type of the state of this operation stack</typeparam>
     /// <typeparam name="TState">Type of the event of this operation stack</typeparam>
     public class OperationStack<TState, TOperationEvent> : ICommandOperation<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         #region Fields and Props
         public OperationStackOptions Options => internalStack.Options;
@@ -369,7 +369,7 @@ namespace DomainObjects.Operations
 
         #endregion Async
 
-        #region OnEvents
+        #region OnEvents / Catch
 
         public OperationStack<TState, TOperationEvent> OnEvents(Func<IEventsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> op)
         {
@@ -384,36 +384,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent> OnErrors(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.IsError));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent> OnErrorsOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.IsError));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TState, TOperationEvent> Catch(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException && !x.Error.IsHandled));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TState, TOperationEvent> CatchOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException && !x.Error.IsHandled));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException && !x.Error.IsHandled));
+        //}
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException && !x.Error.IsHandled));
+        //}
 
 
 
@@ -430,36 +452,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent> OnErrorsWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TState, TOperationEvent> CatchWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TState, TOperationEvent> CatchOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+        //}
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+        //}
 
 
 
@@ -476,36 +520,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent> OnErrors(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent> OnErrorsOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
         
         public OperationStack<TState, TOperationEvent> OnExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        public OperationStack<TState, TOperationEvent> Catch(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        public OperationStack<TState, TOperationEvent> CatchOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>> handler)
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+        //}
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+        //}
 
 
 
@@ -522,36 +588,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent> OnErrorsWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        public OperationStack<TState, TOperationEvent> CatchWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        public OperationStack<TState, TOperationEvent> CatchOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>> handler)
+        {
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+        //}
+
+        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+        //}
 
         #endregion
 
@@ -592,7 +680,7 @@ namespace DomainObjects.Operations
 
     
     public class OperationStack<TState, TOperationEvent, T> : IQueryOperation<TState, TOperationEvent, T>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         #region Fields and Props
 
@@ -841,7 +929,7 @@ namespace DomainObjects.Operations
 
         #endregion Sync
 
-        #region OnEvents
+        #region OnEvents / Catch
 
 
         public OperationStack<TState, TOperationEvent,T> OnEvents(Func<IEventsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> op)
@@ -857,36 +945,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent,T> OnErrors(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnErrorsOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent,T>, BlockResult<T>> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception,TState, TOperationEvent,T>, BlockResult<T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TState, TOperationEvent, T> Catch(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TState, TOperationEvent, T> CatchOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent, T>, BlockResult<T>> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
+        //}
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
+        //}
 
 
 
@@ -906,36 +1016,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent,T> OnErrorsWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent,T>, BlockResult<T>> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent,Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TState, TOperationEvent, T> CatchWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TState, TOperationEvent, T> CatchOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent, T>, BlockResult<T>> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
+        //}
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
+        //}
 
 
 
@@ -952,36 +1084,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent,T> OnErrors(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnErrorsOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent,T>> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptions(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        public OperationStack<TState, TOperationEvent, T> Catch(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
+        public OperationStack<TState, TOperationEvent, T> CatchOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent, T>> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>> handler)
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
+        //}
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
+        //}
 
 
 
@@ -1000,36 +1154,58 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent,T> OnErrorsWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent,T>> handler)
             where TError : TOperationEvent
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
         public OperationStack<TState, TOperationEvent,T> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        public OperationStack<TState, TOperationEvent, T> CatchWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>> handler)
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>> handler)
+        public OperationStack<TState, TOperationEvent, T> CatchOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent, T>> handler)
+            where TError : TOperationEvent
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>> handler)
+        {
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
+        }
+
+        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>> handler)
             where TException : Exception
         {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
+            return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
+        //}
+
+        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>> handler)
+        //    where TException : Exception
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
+        //}
 
         #endregion
 
@@ -1084,7 +1260,7 @@ namespace DomainObjects.Operations
     }
 
     public class OperationStack<TOperationEvent> : OperationStack<object, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public OperationStack()
             : base()

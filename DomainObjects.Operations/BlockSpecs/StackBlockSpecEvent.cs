@@ -7,7 +7,7 @@ namespace DomainObjects.Operations
 {
 
     internal class StackBlockSpecEvent<TState, TOperationEvent> : StackBlockSpecBase<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
         public override Type InputType => null;
@@ -24,7 +24,7 @@ namespace DomainObjects.Operations
     }
 
     internal class StackBlockSpecEvent<TState, TOperationEvent, Tin> : StackBlockSpecBase<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
         public override Type InputType => typeof(Tin);

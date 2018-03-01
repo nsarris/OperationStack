@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     public class StackEvents<TOperationEvent> : IStackEvents<TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         List<TOperationEvent> events = new List<TOperationEvent>();
         public StackEvents()
@@ -35,10 +35,10 @@ namespace DomainObjects.Operations
             return events;
         }
 
-        public IEnumerable<TEvent> FilterUnhandled<TEvent>(Func<TEvent, bool> filter = null)
+        public IEnumerable<TEvent> FilterErrors<TEvent>(bool? handled, Func<TEvent, bool> filter = null)
             where TEvent : TOperationEvent
         {
-            var events = this.OfType<TEvent>().Where(x => !x.IsHandled);
+            var events = this.OfType<TEvent>().Where(x => handled == null || x.IsHandled == handled);
             if (filter != null)
                 events = events.Where(filter);
             var r =  events.ToList();
@@ -46,12 +46,12 @@ namespace DomainObjects.Operations
             return r;
         }
 
-        public IEnumerable<IOperationExceptionError<TEvent, TException>> FilterUnhandledException<TEvent,TException>(Func<IOperationExceptionError<TEvent, TException>, bool> filter = null) 
+        public IEnumerable<IOperationExceptionError<TEvent, TException>> FilterExceptions<TEvent,TException>(bool? handled, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null) 
             where TException : Exception 
             where TEvent : TOperationEvent
         {
             var events = this.OfType<TEvent>()
-                .Where(x => x.Exception is TException && !x.IsHandled)
+                .Where(x => x.Exception is TException && (handled == null || x.IsHandled == handled))
                 .Select(x => new OperationExceptionError<TEvent,TException>(x, x.Exception as TException) as IOperationExceptionError<TEvent,TException>);
             if (filter != null)
                 events = events.Where(filter);

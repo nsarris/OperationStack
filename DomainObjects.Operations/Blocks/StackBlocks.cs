@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     internal class StackBlocks<TState, TOperationEvent> //: List<StackBlockSpecBase<TState, TOperationEvent>>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         private List<StackBlockSpecBase<TState, TOperationEvent>> blocks = new List<StackBlockSpecBase<TState, TOperationEvent>>();
         private Dictionary<string, StackBlockSpecBase<TState, TOperationEvent>> blockDictionaryByTag;

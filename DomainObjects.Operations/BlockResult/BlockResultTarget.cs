@@ -21,6 +21,6 @@
         public object State { get; set; }
         public bool ResetStateSet { get; set; }
         public IEmptyable OverrideResult { get; set; } = Emptyable.Empty;
-        public IOperationEvent Error { get; set; }
+        public OperationEvent Error { get; set; }
     }
 }

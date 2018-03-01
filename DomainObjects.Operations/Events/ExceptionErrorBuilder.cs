@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     public static class ExceptionErrorBuilder<TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         private static Lazy<Func<Exception, TOperationEvent>> builder;
 

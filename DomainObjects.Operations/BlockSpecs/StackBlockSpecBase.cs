@@ -21,7 +21,7 @@ namespace DomainObjects.Operations
     }
 
     internal abstract class StackBlockSpecBase<TState, TOperationEvent> //: IStackBlockSpec
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public string Tag { get; private set; }
         public int Index { get; private set; }

@@ -1,7 +1,7 @@
 ﻿namespace DomainObjects.Operations
 {
     internal class EventHandlerBlockBase<TState, TOperationEvent, Tin> : StackBlockBase<TState, TOperationEvent>, IStackBlock<TState, TOperationEvent, Tin>, IResultDispatcher<Tin, TState>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         ResultDispatcher<Tin,TState> resultDispather = new ResultDispatcher<Tin,TState>();
         internal EventHandlerBlockBase(string tag, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents) : base(tag, state, stackEvents)
@@ -16,7 +16,7 @@
             return resultDispather.Fail();
         }
 
-        public BlockResult<Tin> Fail(IOperationEvent error)
+        public BlockResult<Tin> Fail(OperationEvent error)
         {
             return resultDispather.Fail(error);
         }
