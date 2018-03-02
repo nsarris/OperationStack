@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     internal abstract class StackBlockBase<TOperationEvent> : IStackBlock<TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public string Tag { get; private set; }
         
@@ -149,7 +149,7 @@ namespace DomainObjects.Operations
     }
 
     internal abstract class StackBlockBase<TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public StackBlockBase(string tag, TState state, IStackEvents<TOperationEvent> stackEvents) 
             : base(tag, stackEvents)

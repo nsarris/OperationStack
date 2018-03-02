@@ -8,7 +8,7 @@ namespace DomainObjects.Operations
 {
 
     internal class QueryBlock<TState, TOperationEvent,TResult> : StackBlockBase<TState, TOperationEvent>, IQuery<TState, TOperationEvent>, ITypedQuery<TState, TOperationEvent, TResult>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         private ResultDispatcher<TResult,TState> resultDispatcher = new ResultDispatcher<TResult,TState>();
                 protected QueryBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents)
@@ -94,7 +94,7 @@ namespace DomainObjects.Operations
             return new ResultDispatcher<T,TState>().Fail();
         }
 
-        BlockResult<T> IResultDispatcher<TState>.Fail<T>(IOperationEvent error)
+        BlockResult<T> IResultDispatcher<TState>.Fail<T>(OperationEvent error)
         {
             return new ResultDispatcher<T, TState>().Fail(error);
         }
@@ -206,7 +206,7 @@ namespace DomainObjects.Operations
             return resultDispatcher.Fail();
         }
 
-        BlockResult<TResult> IResultDispatcher<TResult, TState>.Fail(IOperationEvent error)
+        BlockResult<TResult> IResultDispatcher<TResult, TState>.Fail(OperationEvent error)
         {
             return resultDispatcher.Fail(error);
         }

@@ -8,7 +8,7 @@ namespace DomainObjects.Operations
 {
 
     public abstract class OperationResult<TState, TOperationEvent> : IOperationResult<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public bool Success { get; private set; }
         public IEnumerable<TOperationEvent> Events { get; private set; }
@@ -18,7 +18,7 @@ namespace DomainObjects.Operations
 
         object IOperationResult.StackState => StackState;
 
-        IEnumerable<IOperationEvent> IOperationResult.Events => throw new NotImplementedException();
+        IEnumerable<OperationEvent> IOperationResult.Events => throw new NotImplementedException();
 
         public OperationResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TState stackState)
         {

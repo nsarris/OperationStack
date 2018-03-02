@@ -61,7 +61,7 @@ namespace OperationStack.Tests
                     throw new Exception();
                     return op.Return();
                 })
-                .OnUnhandledExceptions(h =>
+                .OnExceptions(h =>
                 {
                     Assert.AreEqual(1, h.ExceptionErrors.Count());
                     foreach (var e in h.ExceptionErrors)
@@ -117,7 +117,7 @@ namespace OperationStack.Tests
                         e.Handle();
                     }
                 })
-                .OnUnhandledExceptions(h =>
+                .OnExceptions(h =>
                 {
                     Assert.True(h.ExceptionErrors.All(e => e.Error.IsHandled));
                     return h.Return();
@@ -151,7 +151,7 @@ namespace OperationStack.Tests
                     Assert.False(h.Errors.All(e => e.IsHandled));
                     return h.Return();
                 })
-                .OnUnhandledExceptions(h =>
+                .OnExceptions(h =>
                 {
                     foreach (var e in h.ExceptionErrors)
                     {
@@ -160,6 +160,54 @@ namespace OperationStack.Tests
                 })
                 .ToResult();
 
+            Assert.True(os.Events.All(e => e.IsHandled));
+        }
+
+        [Test]
+        public void ResultFlowingThroughEventHandlers()
+        {
+            var os = new OperationStack<object, OperationEvent>()
+                .Then(op =>
+                {
+                    throw new Exception();
+                    return op.Return();
+                })
+                .ThenReturn(op =>
+                {
+                    return op.Return(42);
+                })
+                .Catch(h =>
+                {
+                    
+                })
+                .ToResult();
+
+            Assert.True(os.Success);
+            Assert.True(os.Result.Value == 42);
+            Assert.True(os.Events.All(e => e.IsHandled));
+        }
+
+        [Test]
+        public void ResultChangedInEventHandler()
+        {
+            var os = new OperationStack<object, OperationEvent>()
+                .Then(op =>
+                {
+                    throw new Exception();
+                    return op.Return();
+                })
+                .ThenReturn(op =>
+                {
+                    return op.Return(42);
+                })
+                .CatchExceptionsOf<Exception>(h =>
+                {
+                    return h.Return(43);
+                })
+                .ToResult();
+
+            Assert.True(os.Success);
+            Assert.True(os.Result.Value == 43);
             Assert.True(os.Events.All(e => e.IsHandled));
         }
     }

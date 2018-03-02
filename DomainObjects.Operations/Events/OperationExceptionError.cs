@@ -3,7 +3,7 @@
 namespace DomainObjects.Operations
 {
     public class OperationExceptionError<TEvent, TException> : IOperationExceptionError<TEvent,TException>
-        where TEvent : IOperationEvent
+        where TEvent : OperationEvent
         where TException : Exception
     {
         

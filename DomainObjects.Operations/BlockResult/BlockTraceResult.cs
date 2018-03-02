@@ -4,7 +4,7 @@ using System.Linq;
 namespace DomainObjects.Operations
 {
     public class BlockTraceResult<TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public string Tag { get; private set; }
         public IEmptyable Result { get; private set; }

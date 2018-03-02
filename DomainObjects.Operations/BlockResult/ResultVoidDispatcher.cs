@@ -13,7 +13,7 @@
             };
         }
 
-        public BlockResultVoid Fail(IOperationEvent error)
+        public BlockResultVoid Fail(OperationEvent error)
         {
             return new BlockResultVoid
             {

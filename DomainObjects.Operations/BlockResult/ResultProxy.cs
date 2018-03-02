@@ -94,7 +94,7 @@ namespace DomainObjects.Operations
             return resultDispatcher.Return(Result);
         }
 
-        public BlockResult<T> Fail(IOperationEvent error)
+        public BlockResult<T> Fail(OperationEvent error)
         {
             return resultDispatcher.Fail(error);
         }

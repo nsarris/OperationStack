@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     internal class OperationStackInternal<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public OperationStackOptions Options { get; set; } = new OperationStackOptions();
         public StackBlocks<TState,TOperationEvent> Blocks { get; set; } = new StackBlocks<TState, TOperationEvent>();

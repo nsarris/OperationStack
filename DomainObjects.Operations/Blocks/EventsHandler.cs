@@ -8,7 +8,7 @@ namespace DomainObjects.Operations
 {
 
     internal class EventsHandler<TEvent, TState, TOperationEvent> : EventHandlerBlockBase<TState, TOperationEvent>, IEventsHandler<TEvent, TState, TOperationEvent>
-            where TOperationEvent : IOperationEvent
+            where TOperationEvent : OperationEvent
             where TEvent : TOperationEvent
     {
         IEnumerable<TEvent> events;
@@ -16,18 +16,18 @@ namespace DomainObjects.Operations
         private EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<TEvent, bool> filter = null)
             : base(tag, state, stackEvents)
         {
-            events = stackEvents.FilterUnhandled(filter);
+            events = stackEvents.FilterErrors(null, filter);
             IsEmptyEventBlock = !events.Any();
         }
 
         public EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IEventsHandler<TEvent, TState, TOperationEvent>, BlockResultVoid> func, Func<TEvent, bool> filter = null)
-            : this(tag, state, stackEvents)
+            : this(tag, state, stackEvents, filter)
         {
             executor = () => func(this);
         }
 
         public EventsHandler(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Action<IEventsHandler<TEvent, TState, TOperationEvent>> action, Func<TEvent, bool> filter = null)
-            : this(tag, state, stackEvents)
+            : this(tag, state, stackEvents, filter)
         {
             executor = () => { action(this); return Return(); };
         }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     public class OperationEvents<TOperationEvent> : IEnumerable<TOperationEvent>, IOperationEvents<TOperationEvent>
-        where TOperationEvent :IOperationEvent
+        where TOperationEvent :OperationEvent
     {
         List<TOperationEvent> events = new List<TOperationEvent>();
 

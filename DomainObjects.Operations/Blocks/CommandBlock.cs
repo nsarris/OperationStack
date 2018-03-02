@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     internal class CommandBlock<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, ICommand<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         private ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();
 
@@ -74,7 +74,7 @@ namespace DomainObjects.Operations
             return resultDispatcher.Fail();
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Fail(IOperationEvent error)
+        BlockResultVoid IResultVoidDispatcher<TState>.Fail(OperationEvent error)
         {
             return resultDispatcher.Fail(error);
         }

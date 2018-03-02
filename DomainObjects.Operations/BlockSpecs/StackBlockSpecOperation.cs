@@ -5,7 +5,7 @@ namespace DomainObjects.Operations
 
 
     internal class StackBlockSpecOperation<TState, TOperationEvent> : StackBlockSpecBase<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
 
@@ -24,7 +24,7 @@ namespace DomainObjects.Operations
     }
 
     internal class StackBlockSpecOperation<TState, TOperationEvent, Tin> : StackBlockSpecBase<TState, TOperationEvent>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
 

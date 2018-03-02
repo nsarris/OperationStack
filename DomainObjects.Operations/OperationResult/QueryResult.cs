@@ -3,7 +3,7 @@
 namespace DomainObjects.Operations
 {
     public class QueryResult<TState, TOperationEvent,T> : CommandResult<TState, TOperationEvent>, IQueryResult<TState, TOperationEvent,T>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public Emptyable<T> Result { get; private set; }
 

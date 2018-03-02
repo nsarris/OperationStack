@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace DomainObjects.Operations
 {
     internal class CommandBlock<TState, TOperationEvent, Tin> : CommandBlock<TState, TOperationEvent>, ICommand<TState, TOperationEvent,Tin>
-        where TOperationEvent : IOperationEvent
+        where TOperationEvent : OperationEvent
     {
         public new Emptyable<Tin> Input { get => (Emptyable<Tin>)base.Input; private set => base.Input = value; }
 
