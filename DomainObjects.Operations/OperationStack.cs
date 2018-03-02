@@ -58,12 +58,12 @@ namespace DomainObjects.Operations
         #region Sync
 
         /// <summary>
-        /// Add a command operation
+        /// Add a void block of code to be executed in the stack
         /// </summary>
         /// <remarks>
         /// A command operation is a function that doesn't return a value
         /// </remarks>
-        /// <param name="op">The command to be executed</param>
+        /// <param name="op">A handle to control the flow of the code</param>
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
         {
@@ -86,7 +86,7 @@ namespace DomainObjects.Operations
         }
 
         /// <summary>
-        /// Add a query operation
+        /// Add a block of code which returns a value of <see cref="T"/> 
         /// </summary>
         /// <remarks>
         /// A query operation is a function that returns a value

@@ -1,7 +1,6 @@
 ﻿using DomainObjects.Operations;
 using NUnit.Framework;
 using System;
-using System.Diagnostics;
 using System.Linq;
 
 namespace OperationStack.Tests
@@ -51,7 +50,7 @@ namespace OperationStack.Tests
         }
 
         [Test]
-        public void HandleExceptions()
+        public void HandledExceptions()
         {
             var handledExceptionOs = new OperationStack<object, OperationEvent>(new OperationStackOptions()
             {
@@ -144,7 +143,7 @@ namespace OperationStack.Tests
                 .Then(op =>
                 {
                     var oe = new OperationEvent("Test event");
-                    oe.Throw();
+                    oe.Throw(); // Should throw an exception because the OperationEvent is not an error
                     return op.Return();
                 })
                 .OnErrors(h =>
