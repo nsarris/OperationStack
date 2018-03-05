@@ -3,7 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Linq;
 
-namespace OperationStack.Tests
+namespace OperationStackTests
 {
     [TestFixture]
     public class OperationStackTests
@@ -209,6 +209,31 @@ namespace OperationStack.Tests
             Assert.True(os.Success);
             Assert.True(os.Result.Value == 43);
             Assert.True(os.Events.All(e => e.IsHandled));
+        }
+
+        [Test]
+        public void NestedOperatioStacks()
+        {
+            var os1 = new OperationStack<object, OperationEvent>()
+                .ThenReturn(op =>
+                {
+                    op.Events.Add(new OperationEvent("OS1"));
+                    return op.Return(1);
+                });
+
+            var os2 = new OperationStack<object, OperationEvent>()
+                .ThenReturn(op =>
+                {
+                    op.Events.Add(new OperationEvent("OS2"));
+                    return op.Return(2);
+                });
+
+            var os3 = new OperationStack()
+                .ThenAppend(os1)
+                .ThenAppend(os2)
+                .ToResult();
+
+            Assert.AreEqual(os3.Events.Count(), 2);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace DomainObjects.Operations
 
         object IOperationResult.StackState => StackState;
 
-        IEnumerable<OperationEvent> IOperationResult.Events => throw new NotImplementedException();
+        IEnumerable<OperationEvent> IOperationResult.Events => Events;
 
         public OperationResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TState stackState)
         {

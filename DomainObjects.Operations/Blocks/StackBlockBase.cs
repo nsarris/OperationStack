@@ -24,8 +24,6 @@ namespace DomainObjects.Operations
         {
             Tag = tag;
             StackEvents = stackEvents;
-
-            
         }
         
         protected Func<IBlockResult> executor;
@@ -33,7 +31,7 @@ namespace DomainObjects.Operations
 
         public void Append(IOperationResult<TOperationEvent> result)
         {
-            this.Events.Append(result.Events);
+            //this.Events.Append(result.Events);
             innerStackTrace.AddRange(result.StackTrace);
         }
         
