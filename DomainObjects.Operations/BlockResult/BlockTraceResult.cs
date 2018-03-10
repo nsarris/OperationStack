@@ -21,7 +21,7 @@ namespace DomainObjects.Operations
             Input = stackBlock.Input;
             Result = blockResult.Result;
             InnerStackTrace = stackBlock.InnerStackTrace ?? Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
-            Events = stackBlock.FlattenedEvents;
+            Events = stackBlock.Events.ToList();
 
             if (blockResult.ExecutionTime == null)
                 Time = new ExecutionTime();

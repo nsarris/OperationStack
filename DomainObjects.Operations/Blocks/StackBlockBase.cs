@@ -34,6 +34,11 @@ namespace DomainObjects.Operations
             //this.Events.Append(result.Events);
             innerStackTrace.AddRange(result.StackTrace);
         }
+
+        public void Throw(TOperationEvent error)
+        {
+            this.Events.Throw(error);
+        }
         
         internal IBlockResult Execute(bool measureTime = true)
         {

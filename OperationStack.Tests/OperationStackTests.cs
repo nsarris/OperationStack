@@ -14,7 +14,7 @@ namespace OperationStackTests
             var os = new OperationStack<object, OperationEvent>()
                 .Then(op =>
                 {
-                    var x = 42;
+                    //var x = 42;
                     return op.Return();
                 })
                 .ThenReturn(op =>
@@ -125,6 +125,7 @@ namespace OperationStackTests
                 .Then(op =>
                 {
                     var oe = new OperationEvent("Test event");
+                    //op.Throw(oe);
                 })
                 .OnEvents(h =>
                 {
@@ -134,6 +135,7 @@ namespace OperationStackTests
                 .Then(op =>
                 {
                     var oe = new OperationEvent(new Exception());
+                    op.Throw(oe);
                 })
                 .OnEvents(h =>
                 {

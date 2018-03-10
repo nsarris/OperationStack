@@ -38,7 +38,7 @@ namespace DomainObjects.Operations
         public IEnumerable<TEvent> FilterErrors<TEvent>(bool? handled, Func<TEvent, bool> filter = null)
             where TEvent : TOperationEvent
         {
-            var events = this.OfType<TEvent>().Where(x => handled == null || x.IsHandled == handled);
+            var events = this.OfType<TEvent>().Where(x => !x.IsSwallowed && (handled == null || x.IsHandled == handled));
             if (filter != null)
                 events = events.Where(filter);
             var r =  events.ToList();
@@ -51,7 +51,7 @@ namespace DomainObjects.Operations
             where TEvent : TOperationEvent
         {
             var events = this.OfType<TEvent>()
-                .Where(x => x.Exception is TException && (handled == null || x.IsHandled == handled))
+                .Where(x => x.Exception is TException && !x.IsSwallowed && (handled == null || x.IsHandled == handled))
                 .Select(x => new OperationExceptionError<TEvent,TException>(x, x.Exception as TException) as IOperationExceptionError<TEvent,TException>);
             if (filter != null)
                 events = events.Where(filter);

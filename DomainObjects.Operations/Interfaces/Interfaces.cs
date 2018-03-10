@@ -67,6 +67,7 @@ namespace DomainObjects.Operations
         where TOperationEvent : OperationEvent
     {
         IStackEvents<TOperationEvent> StackEvents { get; }
+        void Throw(TOperationEvent error);
     }
 
     public interface IStackBlock<TState, TOperationEvent> : IStackBlock<TOperationEvent>

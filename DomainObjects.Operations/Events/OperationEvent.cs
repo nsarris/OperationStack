@@ -20,6 +20,7 @@ namespace DomainObjects.Operations
 
     public class OperationEvent 
     {
+        public bool IsSwallowed { get; private set; }
         public bool IsHandled { get; private set; }
 
         public bool IsError { get; protected set; }
@@ -54,11 +55,18 @@ namespace DomainObjects.Operations
             IsHandled = true;
         }
 
+        public void Swallow()
+        {
+            IsHandled = true;
+        }
+
         public void Throw()
         {
-            if (!IsError)
-                throw new Exception("Cannot throw an OperationEvent that is not an error");
+            //if (!IsError)
+            //    throw new Exception("Cannot throw an OperationEvent that is not an error");
+            IsError = true;
             IsHandled = false;
+            IsSwallowed = false;
         }
 
         public virtual void FromException(Exception e)

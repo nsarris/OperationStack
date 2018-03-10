@@ -67,7 +67,7 @@ namespace DomainObjects.Operations
         {
             get
             {
-                return this.Any(x => x.IsException && !x.IsHandled);
+                return this.Any(x => x.IsException && !x.IsHandled && !x.IsSwallowed);
             }
         }
     }

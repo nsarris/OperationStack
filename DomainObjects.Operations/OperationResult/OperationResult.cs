@@ -29,7 +29,7 @@ namespace DomainObjects.Operations
                 stackTrace
                 .ToList());
 
-            Events = StackTrace.SelectMany(x => x.Events).ToList();
+            Events = StackTrace.SelectMany(x => x.FlattenedEvents.Where(e => !e.IsSwallowed)).ToList();
         }
     }
 }

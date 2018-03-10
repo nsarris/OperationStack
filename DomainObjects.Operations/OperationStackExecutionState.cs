@@ -20,7 +20,7 @@ namespace DomainObjects.Operations
         StackBlocks<TState, TOperationEvent> blocks;
         private bool GetSuccessState()
         {
-            return !IsFail && !StackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled);
+            return !IsFail && !StackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled && !x.IsSwallowed);
         }
 
         public OperationStackExecutionState(OperationStackOptions options, StackBlocks<TState, TOperationEvent> blocks, TState initialState)
