@@ -24,7 +24,7 @@ namespace DomainObjects.Operations
         }
         
 
-        private IOperationResult<TState, TOperationEvent> ToResult<T>(bool isCommand, TState initialState)
+        private IOperationResult<TState, TOperationEvent> Execute<T>(bool isCommand, TState initialState)
         {
             var executionState = new OperationStackExecutionState<TState,TOperationEvent>(Options, Blocks, initialState);
             
@@ -42,7 +42,7 @@ namespace DomainObjects.Operations
         }
 
         
-        private async Task<IOperationResult<TState, TOperationEvent>> ToResultAsync<T>(bool isCommand, TState initialState)
+        private async Task<IOperationResult<TState, TOperationEvent>> ExecuteAsync<T>(bool isCommand, TState initialState)
         {
             var executionState = new OperationStackExecutionState<TState, TOperationEvent>(Options, Blocks, initialState);
 
@@ -61,24 +61,24 @@ namespace DomainObjects.Operations
         }
 
         
-        public ICommandResult<TState, TOperationEvent> ToResult(TState initialState)
+        public ICommandResult<TState, TOperationEvent> Execute(TState initialState)
         {
-            return (ICommandResult<TState, TOperationEvent>)ToResult<object>(true, initialState);
+            return (ICommandResult<TState, TOperationEvent>)Execute<object>(true, initialState);
         }
 
-        public IQueryResult<TState, TOperationEvent, T> ToResult<T>(TState initialState)
+        public IQueryResult<TState, TOperationEvent, T> Execute<T>(TState initialState)
         {
-            return (IQueryResult<TState, TOperationEvent, T>)ToResult<T>(false, initialState);
+            return (IQueryResult<TState, TOperationEvent, T>)Execute<T>(false, initialState);
         }
 
-        public async Task<ICommandResult<TState, TOperationEvent>> ToResultAsync(TState initialState)
+        public async Task<ICommandResult<TState, TOperationEvent>> ExecuteAsync(TState initialState)
         {
-            return (ICommandResult<TState, TOperationEvent>)(await ToResultAsync<object>(true, initialState));
+            return (ICommandResult<TState, TOperationEvent>)(await ExecuteAsync<object>(true, initialState));
         }
 
-        public async Task<IQueryResult<TState, TOperationEvent, T>> ToResultAsync<T>(TState initialState)
+        public async Task<IQueryResult<TState, TOperationEvent, T>> ExecuteAsync<T>(TState initialState)
         {
-            return (IQueryResult<TState, TOperationEvent, T>)(await ToResultAsync<T>(false,initialState));
+            return (IQueryResult<TState, TOperationEvent, T>)(await ExecuteAsync<T>(false,initialState));
         }
     }
 }

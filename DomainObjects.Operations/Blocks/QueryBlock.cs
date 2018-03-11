@@ -56,9 +56,9 @@ namespace DomainObjects.Operations
             : base(tag, state, stackEvents)
         {
             if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
-                executor = () => { var r = queryOperation.ToResult(); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
+                executor = () => { var r = queryOperation.Execute(); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
             else
-                executorAsync = async () => { var r = await queryOperation.ToResultAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
+                executorAsync = async () => { var r = await queryOperation.ExecuteAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
         }
 
 
@@ -66,9 +66,9 @@ namespace DomainObjects.Operations
             : base(tag, state, stackEvents)
         {
             if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
-                executor = () => { var r = queryOperation.ToResult(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
+                executor = () => { var r = queryOperation.Execute(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
             else
-                executorAsync = async () => { var r = await queryOperation.ToResultAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
+                executorAsync = async () => { var r = await queryOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
         }
 
 

@@ -67,7 +67,6 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
@@ -81,7 +80,6 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent> Then(Action<ICommand<TState, TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
@@ -95,13 +93,11 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent, T> ThenReturn<T>(Func<IQuery<TState, TOperationEvent>, BlockResult<T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent, T> ThenReturnOf<T>(Func<ITypedQuery<TState, TOperationEvent,T>, BlockResult<T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
@@ -112,7 +108,6 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
@@ -123,7 +118,6 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(Func<IOperationBlock<TState, TOperationEvent>, IQueryResult<TOperationEvent,T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
@@ -134,7 +128,6 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent> ThenAppend(ICommandResult<TOperationEvent> res)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, (op) => res));
         }
 
@@ -145,7 +138,6 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(IQueryResult<TOperationEvent,T> res)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, (op) => res));
         }
 
@@ -181,7 +173,6 @@ namespace DomainObjects.Operations
         /// /// <returns></returns>
         public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
@@ -197,7 +188,6 @@ namespace DomainObjects.Operations
         /// /// <returns></returns>
         public OperationStack<TState, TOperationEvent> Then(string tag, Action<ICommand<TState, TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
@@ -212,37 +202,31 @@ namespace DomainObjects.Operations
         /// <returns></returns>
         public OperationStack<TState, TOperationEvent, T> ThenReturn<T>(string tag, Func<IQuery<TState, TOperationEvent>, BlockResult<T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent, T> ThenReturnOf<T>(string tag, Func<ITypedQuery<TState, TOperationEvent,T>, BlockResult<T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, Func<IOperationBlock<TState, TOperationEvent>, IQueryResult<TOperationEvent,T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandResult<TOperationEvent> res)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, (op) => res));
         }
 
         public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryResult<TOperationEvent,T> res)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, (op) => res));
         }
 
@@ -270,25 +254,21 @@ namespace DomainObjects.Operations
 
         public OperationStack<TState, TOperationEvent> Finally(Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent> Finally(Action<ICommand<TState, TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent, T> FinallyReturn<T>(Func<IQuery<TState, TOperationEvent>, BlockResult<T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
         public OperationStack<TState, TOperationEvent, T> FinallyReturnOf<T>(Func<ITypedQuery<TState, TOperationEvent,T>, BlockResult<T>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
@@ -664,36 +644,36 @@ namespace DomainObjects.Operations
 
         #endregion
 
-        #region Result
+        #region Execute
 
-        public ICommandResult<TState, TOperationEvent> ToResult(TState initialState)
+        public ICommandResult<TState, TOperationEvent> Execute(TState initialState)
         {
-            return internalStack.ToResult(initialState);
+            return internalStack.Execute(initialState);
         }
 
-        public Task<ICommandResult<TState, TOperationEvent>> ToResultAsync(TState initialState)
+        public Task<ICommandResult<TState, TOperationEvent>> ExecuteAsync(TState initialState)
         {
-            return internalStack.ToResultAsync(initialState);
+            return internalStack.ExecuteAsync(initialState);
         }
 
-        public ICommandResult<TState, TOperationEvent> ToResult()
+        public ICommandResult<TState, TOperationEvent> Execute()
         {
-            return internalStack.ToResult(default(TState));
+            return internalStack.Execute(default(TState));
         }
 
-        public Task<ICommandResult<TState, TOperationEvent>> ToResultAsync()
+        public Task<ICommandResult<TState, TOperationEvent>> ExecuteAsync()
         {
-            return internalStack.ToResultAsync(default(TState));
+            return internalStack.ExecuteAsync(default(TState));
         }
 
-        ICommandResult<TOperationEvent> ICommandOperation<TOperationEvent>.ToResult()
+        ICommandResult<TOperationEvent> ICommandOperation<TOperationEvent>.Execute()
         {
-            return internalStack.ToResult(default(TState));
+            return internalStack.Execute(default(TState));
         }
 
-        async Task<ICommandResult<TOperationEvent>> ICommandOperation<TOperationEvent>.ToResultAsync()
+        async Task<ICommandResult<TOperationEvent>> ICommandOperation<TOperationEvent>.ExecuteAsync()
         {
-            return await internalStack.ToResultAsync(default(TState)).ConfigureAwait(false);
+            return await internalStack.ExecuteAsync(default(TState)).ConfigureAwait(false);
         }
 
         #endregion Result
@@ -1268,37 +1248,37 @@ namespace DomainObjects.Operations
 
         #endregion
 
-        #region Result
+        #region Execute
 
-        public IQueryResult<TState, TOperationEvent,T> ToResult(TState initialState)
+        public IQueryResult<TState, TOperationEvent,T> Execute(TState initialState)
         {
-            return internalStack.ToResult<T>(initialState);
+            return internalStack.Execute<T>(initialState);
         }
 
-        public Task<IQueryResult<TState, TOperationEvent, T>> ToResultAsync(TState initialState)
+        public Task<IQueryResult<TState, TOperationEvent, T>> ExecuteAsync(TState initialState)
         {
-            return internalStack.ToResultAsync<T>(initialState);
+            return internalStack.ExecuteAsync<T>(initialState);
         }
 
-        public IQueryResult<TState, TOperationEvent, T> ToResult()
+        public IQueryResult<TState, TOperationEvent, T> Execute()
         {
-            return internalStack.ToResult<T>(default(TState));
+            return internalStack.Execute<T>(default(TState));
         }
 
-        public Task<IQueryResult<TState, TOperationEvent, T>> ToResultAsync()
+        public Task<IQueryResult<TState, TOperationEvent, T>> ExecuteAsync()
         {
-            return internalStack.ToResultAsync<T>(default(TState));
+            return internalStack.ExecuteAsync<T>(default(TState));
         }
 
     
-        IQueryResult<TOperationEvent, T> IQueryOperation<TOperationEvent, T>.ToResult()
+        IQueryResult<TOperationEvent, T> IQueryOperation<TOperationEvent, T>.Execute()
         {
-            return internalStack.ToResult<T>(default(TState));
+            return internalStack.Execute<T>(default(TState));
         }
 
-        async Task<IQueryResult<TOperationEvent, T>> IQueryOperation<TOperationEvent, T>.ToResultAsync()
+        async Task<IQueryResult<TOperationEvent, T>> IQueryOperation<TOperationEvent, T>.ExecuteAsync()
         {
-            return await internalStack.ToResultAsync<T>(default(TState)).ConfigureAwait(false);
+            return await internalStack.ExecuteAsync<T>(default(TState)).ConfigureAwait(false);
         }
 
         #endregion Result

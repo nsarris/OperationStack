@@ -5,7 +5,7 @@ NOT 4. Refactor dispatcher / result /target to return object that can apply on s
 DONE 5. Test success flow (esp. on appended stacks)
 DONE 6. Refactor event handlers to pass through input 
 NOT Manage success on event handlers (?)
-8. Investigate if ToResult can take input other than state
+8. Investigate if Execute can take input other than state
 9. Clean up interfaces
 DONE 10. Refactor event handlers, add Catch, handle success flow
 NOT Check partials/nested classes to cut down on generic type clutter

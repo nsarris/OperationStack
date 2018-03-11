@@ -54,9 +54,9 @@ namespace DomainObjects.Operations
             : base(tag, state, stackEvents)
         {
             if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
-                executor = () => { var r = commandOperation.ToResult(); this.Append(r); return resultDispatcher.Return(); };
+                executor = () => { var r = commandOperation.Execute(); this.Append(r); return resultDispatcher.Return(); };
             else
-                executorAsync = async () => { var r = await commandOperation.ToResultAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(); };
+                executorAsync = async () => { var r = await commandOperation.ExecuteAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(); };
         }
 
 
@@ -64,9 +64,9 @@ namespace DomainObjects.Operations
             : base(tag, state, stackEvents)
         {
             if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
-                executor = () => { var r = commandOperation.ToResult(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
+                executor = () => { var r = commandOperation.Execute(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
             else
-                executorAsync = async () => { var r = await commandOperation.ToResultAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
+                executorAsync = async () => { var r = await commandOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
         }
 
         BlockResultVoid IResultVoidDispatcher<TState>.Fail()

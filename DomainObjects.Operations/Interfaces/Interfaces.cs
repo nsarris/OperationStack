@@ -17,29 +17,29 @@ namespace DomainObjects.Operations
     public interface IQueryOperation<TOperationEvent, TResult> : IOperation
         where TOperationEvent : OperationEvent
     {
-        IQueryResult<TOperationEvent, TResult> ToResult();
-        Task<IQueryResult<TOperationEvent, TResult>> ToResultAsync();
+        IQueryResult<TOperationEvent, TResult> Execute();
+        Task<IQueryResult<TOperationEvent, TResult>> ExecuteAsync();
     }
 
     public interface ICommandOperation<TOperationEvent> : IOperation
         where TOperationEvent : OperationEvent
     {
-        ICommandResult<TOperationEvent> ToResult();
-        Task<ICommandResult<TOperationEvent>> ToResultAsync();
+        ICommandResult<TOperationEvent> Execute();
+        Task<ICommandResult<TOperationEvent>> ExecuteAsync();
     }
 
     public interface IQueryOperation<TState, TOperationEvent, TResult> : IQueryOperation<TOperationEvent, TResult>
         where TOperationEvent : OperationEvent
     {
-        IQueryResult<TState, TOperationEvent, TResult> ToResult(TState initialState);
-        Task<IQueryResult<TState, TOperationEvent, TResult>> ToResultAsync(TState initialState);
+        IQueryResult<TState, TOperationEvent, TResult> Execute(TState initialState);
+        Task<IQueryResult<TState, TOperationEvent, TResult>> ExecuteAsync(TState initialState);
     }
 
     public interface ICommandOperation<TState, TOperationEvent> : ICommandOperation<TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        ICommandResult<TState, TOperationEvent> ToResult(TState initialState);
-        Task<ICommandResult<TState, TOperationEvent>> ToResultAsync(TState initialState);
+        ICommandResult<TState, TOperationEvent> Execute(TState initialState);
+        Task<ICommandResult<TState, TOperationEvent>> ExecuteAsync(TState initialState);
     }
 
     

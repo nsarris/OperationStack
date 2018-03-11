@@ -22,7 +22,7 @@ namespace OperationStackTests
                     Assert.AreEqual(0, op.Events.Count());
                     return op.Return(42);
                 })
-                .ToResult();
+                .Execute();
 
             Assert.AreEqual(2, os.StackTrace.Count);
             Assert.AreEqual(42, os.Result.Value);
@@ -43,7 +43,7 @@ namespace OperationStackTests
                 {
                     Assert.AreEqual(1, h.Errors.Count());
                 })
-                .ToResult();
+                .Execute();
 
             Assert.Greater(exceptionOs.Events.ToList().Count, 0);
             Assert.False(exceptionOs.Success);
@@ -70,7 +70,7 @@ namespace OperationStackTests
                     }
                     return h.Return();
                 })
-                .ToResult();
+                .Execute();
 
             Assert.True(handledExceptionOs.Success);
             Assert.True(handledExceptionOs.Events.All(e => e.IsHandled));
@@ -94,7 +94,7 @@ namespace OperationStackTests
                     throw new Exception();
                     return op.Return();
                 })
-                .ToResult();
+                .Execute();
 
             Assert.False(unhandledExceptionOs.Success);
             Assert.False(unhandledExceptionOs.Events.All(e => e.IsHandled));
@@ -159,10 +159,11 @@ namespace OperationStackTests
                     {
                         e.Error.Handle();
                     }
-                })
-                .ToResult();
+                });
 
-            Assert.True(os.Events.All(e => e.IsHandled));
+            var r=os.Execute();
+
+            Assert.True(r.Events.All(e => e.IsHandled));
         }
 
         [Test]
@@ -182,7 +183,7 @@ namespace OperationStackTests
                 {
                     
                 })
-                .ToResult();
+                .Execute();
 
             Assert.True(os.Success);
             Assert.True(os.Result.Value == 42);
@@ -206,7 +207,7 @@ namespace OperationStackTests
                 {
                     return h.Return(43);
                 })
-                .ToResult();
+                .Execute();
 
             Assert.True(os.Success);
             Assert.True(os.Result.Value == 43);
@@ -233,7 +234,7 @@ namespace OperationStackTests
             var os3 = new OperationStack()
                 .ThenAppend(os1)
                 .ThenAppend(os2)
-                .ToResult();
+                .Execute();
 
             Assert.AreEqual(os3.Events.Count(), 2);
         }
