@@ -3,55 +3,55 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal class CommandBlock<TState, TOperationEvent> : StackBlockBase<TState, TOperationEvent>, ICommand<TState, TOperationEvent>
+    internal class CommandBlock<TInput, TState, TOperationEvent> : StackBlockBase<TInput, TState, TOperationEvent>, ICommand<TInput,TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
         private ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();
 
-        protected CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents)
-            : base(tag, state, stackEvents)
+        protected CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
+            : base(tag, input, state, stackEvents)
         {
 
         }
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TState, TOperationEvent>, BlockResultVoid> func)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput,TState, TOperationEvent>, BlockResultVoid> func)
+            : base(tag, input, state, stackEvents)
         {
             executor = () => func(this);
         }
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Action<ICommand<TState, TOperationEvent>> action)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Action<ICommand<TInput,TState, TOperationEvent>> action)
+            : base(tag, input, state, stackEvents)
         {
             executor = () => { action(this); return resultDispatcher.Return(); };
         }
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> func)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TInput,TState, TOperationEvent>, ICommandResult<TOperationEvent>> func)
+            : base(tag, input, state, stackEvents)
         {
             executor = () => { var r = func(this); this.Append(r); return resultDispatcher.Return(); };
         }
 
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TState, TOperationEvent>, Task<BlockResultVoid>> func)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput,TState, TOperationEvent>, Task<BlockResultVoid>> func)
+            : base(tag, input, state, stackEvents)
         {
             executorAsync = async () => await func(this).ConfigureAwait(false);
         }
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TState, TOperationEvent>, Task> actionAsync)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput,TState, TOperationEvent>, Task> actionAsync)
+            : base(tag, input, state, stackEvents)
         {
             executorAsync = async () => { await actionAsync(this).ConfigureAwait(false); return resultDispatcher.Return(); };
         }
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> func)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TInput,TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> func)
+            : base(tag, input, state, stackEvents)
         {
             executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(); };
         }
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, ICommandOperation<TOperationEvent> commandOperation)
-            : base(tag, state, stackEvents)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, ICommandOperation<TOperationEvent> commandOperation)
+            : base(tag, input, state, stackEvents)
         {
             if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
                 executor = () => { var r = commandOperation.Execute(); this.Append(r); return resultDispatcher.Return(); };
@@ -60,14 +60,14 @@ namespace DomainObjects.Operations
         }
 
 
-        internal CommandBlock(string tag, TState state, IStackEvents<TOperationEvent> stackEvents, ICommandOperation<TState, TOperationEvent> commandOperation)
-            : base(tag, state, stackEvents)
-        {
-            if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
-                executor = () => { var r = commandOperation.Execute(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
-            else
-                executorAsync = async () => { var r = await commandOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
-        }
+        //internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, ICommandOperation<TInput,TState, TOperationEvent> commandOperation)
+        //    : base(tag, input, state, stackEvents)
+        //{
+        //    if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
+        //        executor = () => { var r = commandOperation.Execute(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
+        //    else
+        //        executorAsync = async () => { var r = await commandOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
+        //}
 
         BlockResultVoid IResultVoidDispatcher<TState>.Fail()
         {

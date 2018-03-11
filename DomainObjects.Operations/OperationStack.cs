@@ -13,7 +13,7 @@ namespace DomainObjects.Operations
     /// </summary>
     /// <typeparam name="TState">Type of the state of this operation stack</typeparam>
     /// <typeparam name="TState">Type of the event of this operation stack</typeparam>
-    public class OperationStack<TState, TOperationEvent> : ICommandOperation<TState, TOperationEvent>
+    public class OperationStack<TInput, TState, TOperationEvent> : ICommandOperation<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
         #region Fields and Props
@@ -23,9 +23,9 @@ namespace DomainObjects.Operations
         bool IOperation.SupportsAsync => internalStack.Options.SupportsAsync;
         bool IOperation.PreferAsync => internalStack.Options.PreferAsync;
 
-        private OperationStackInternal<TState, TOperationEvent> internalStack = new OperationStackInternal<TState, TOperationEvent>();
+        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>();
 
-        private StackBlockSpecBuilder<TState,TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TState, TOperationEvent>();
+        private StackBlockSpecBuilder<TInput, TState, TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TInput, TState, TOperationEvent>();
         #endregion Fields and Props
 
         #region Ctor
@@ -33,24 +33,25 @@ namespace DomainObjects.Operations
         /// <summary>
         /// 
         /// </summary>
-        public OperationStack()
-        {
-            
-        }
+        //public OperationStack()
+        //{
+
+        //}
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="options">Override the default options</param>
-        public OperationStack(OperationStackOptions options)
+        internal OperationStack(OperationStackOptions options, Func<TState> initialStateBuilder)
         {
             internalStack.Options = options;
+            internalStack.InitialStateBuilder = initialStateBuilder;
         }
 
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TState,TOperationEvent>> blocks, OperationStackOptions options)
-            : this(options)
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initialStateBuilder)
+            : this(options, initialStateBuilder)
         {
-            internalStack.Blocks = new StackBlocks<TState,TOperationEvent>(blocks);
+            internalStack.Blocks = new StackBlocks<TInput, TState, TOperationEvent>(blocks);
         }
 
         #endregion Ctor
@@ -65,7 +66,7 @@ namespace DomainObjects.Operations
         /// </remarks>
         /// <param name="op">A handle to control the flow of the code</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Func<ICommand<TInput, TState, TOperationEvent>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
@@ -78,7 +79,7 @@ namespace DomainObjects.Operations
         /// </remarks>
         /// <param name="op">The command to be executed</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent> Then(Action<ICommand<TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Action<ICommand<TInput, TState, TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
@@ -91,12 +92,12 @@ namespace DomainObjects.Operations
         /// </remarks>
         /// <param name="op">The query to be executed</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent, T> ThenReturn<T>(Func<IQuery<TState, TOperationEvent>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturn<T>(Func<IQuery<TInput, TState, TOperationEvent>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenReturnOf<T>(Func<ITypedQuery<TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturnOf<T>(Func<ITypedQuery<TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
@@ -106,7 +107,7 @@ namespace DomainObjects.Operations
         /// </summary>
         /// <param name="op">External command stack to append</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TInput, TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
@@ -116,7 +117,7 @@ namespace DomainObjects.Operations
         /// </summary>
         /// <param name="op">External query stack to append</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(Func<IOperationBlock<TState, TOperationEvent>, IQueryResult<TOperationEvent,T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(Func<IOperationBlock<TInput, TState, TOperationEvent>, IQueryResult<TOperationEvent, T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
@@ -126,7 +127,7 @@ namespace DomainObjects.Operations
         /// </summary>
         /// <param name="op">External command's stack result to append</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent> ThenAppend(ICommandResult<TOperationEvent> res)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandResult<TOperationEvent> res)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, (op) => res));
         }
@@ -136,30 +137,30 @@ namespace DomainObjects.Operations
         /// </summary>
         /// <param name="op">External query's stack result to append</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(IQueryResult<TOperationEvent,T> res)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(IQueryResult<TOperationEvent, T> res)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(ICommandOperation<TOperationEvent> operation)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandOperation<TOperationEvent> operation)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(ICommandOperation<TState, TOperationEvent> operation)
-        {
-            return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
-        }
+        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandOperation<TInput,TState, TOperationEvent> operation)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
+        //}
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(IQueryOperation<TOperationEvent, T> operation)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(IQueryOperation<TOperationEvent, T> operation)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(IQueryOperation<TState, TOperationEvent, T> operation)
-        {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
-        }
+        //public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(IQueryOperation<TInput,TState, TOperationEvent, T> operation)
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
+        //}
 
         /// <summary>
         /// Add a command operation
@@ -171,7 +172,7 @@ namespace DomainObjects.Operations
         /// <param name="op">The command to be executed</param>
         /// <returns></returns>
         /// /// <returns></returns>
-        public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
@@ -186,7 +187,7 @@ namespace DomainObjects.Operations
         /// <param name="op">The command to be executed</param>
         /// <returns></returns>
         /// /// <returns></returns>
-        public OperationStack<TState, TOperationEvent> Then(string tag, Action<ICommand<TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Action<ICommand<TInput, TState, TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
@@ -200,74 +201,74 @@ namespace DomainObjects.Operations
         /// <param name="op">The query to be executed</param>
         /// <param name="tag">Mark the block with a tag for reference</param>
         /// <returns></returns>
-        public OperationStack<TState, TOperationEvent, T> ThenReturn<T>(string tag, Func<IQuery<TState, TOperationEvent>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturn<T>(string tag, Func<IQuery<TInput, TState, TOperationEvent>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenReturnOf<T>(string tag, Func<ITypedQuery<TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturnOf<T>(string tag, Func<ITypedQuery<TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TInput, TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, Func<IOperationBlock<TState, TOperationEvent>, IQueryResult<TOperationEvent,T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, Func<IOperationBlock<TInput, TState, TOperationEvent>, IQueryResult<TOperationEvent, T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandResult<TOperationEvent> res)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandResult<TOperationEvent> res)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryResult<TOperationEvent,T> res)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryResult<TOperationEvent, T> res)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TOperationEvent> operation)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TOperationEvent> operation)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TState, TOperationEvent> operation)
-        {
-            return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
-        }
+        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TInput,TState, TOperationEvent> operation)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
+        //}
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryOperation<TOperationEvent, T> operation)
-        {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
-        }
-
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryOperation<TState, TOperationEvent, T> operation)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryOperation<TOperationEvent, T> operation)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
         }
 
-        
+        //public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryOperation<TInput,TState, TOperationEvent, T> operation)
+        //{
+        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
+        //}
 
-        public OperationStack<TState, TOperationEvent> Finally(Func<ICommand<TState, TOperationEvent>, BlockResultVoid> op)
+
+
+        public OperationStack<TInput, TState, TOperationEvent> Finally(Func<ICommand<TInput, TState, TOperationEvent>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Finally(Action<ICommand<TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Finally(Action<ICommand<TInput, TState, TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> FinallyReturn<T>(Func<IQuery<TState, TOperationEvent>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> FinallyReturn<T>(Func<IQuery<TInput, TState, TOperationEvent>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> FinallyReturnOf<T>(Func<ITypedQuery<TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> FinallyReturnOf<T>(Func<ITypedQuery<TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
@@ -276,94 +277,82 @@ namespace DomainObjects.Operations
 
         #region Async
 
-        public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent>, Task<BlockResultVoid>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Func<ICommand<TInput, TState, TOperationEvent>, Task<BlockResultVoid>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent>, Task> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Func<ICommand<TInput, TState, TOperationEvent>, Task> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenReturn<T>(Func<IQuery<TState, TOperationEvent>, Task<BlockResult<T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturn<T>(Func<IQuery<TInput, TState, TOperationEvent>, Task<BlockResult<T>>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenReturnOf<T>(Func<ITypedQuery<TState, TOperationEvent,T>, Task<BlockResult<T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturnOf<T>(Func<ITypedQuery<TInput, TState, TOperationEvent, T>, Task<BlockResult<T>>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(Func<IOperationBlock<TState, TOperationEvent>, Task<IQueryResult<TOperationEvent,T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<IQueryResult<TOperationEvent, T>>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
 
 
-        public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent>, Task<BlockResultVoid>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent>, Task<BlockResultVoid>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent>, Task> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent>, Task> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenReturn<T>(string tag, Func<IQuery<TState, TOperationEvent>, Task<BlockResult<T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturn<T>(string tag, Func<IQuery<TInput, TState, TOperationEvent>, Task<BlockResult<T>>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenReturnOf<T>(string tag, Func<ITypedQuery<TState, TOperationEvent,T>, Task<BlockResult<T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenReturnOf<T>(string tag, Func<ITypedQuery<TInput, TState, TOperationEvent, T>, Task<BlockResult<T>>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState,TOperationEvent>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(string tag, Func<IOperationBlock<TState, TOperationEvent>, Task<IQueryResult<TOperationEvent,T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<IQueryResult<TOperationEvent, T>>> op)
         {
-            //return internalStack.CreateNew<T>(new StackBlockSpecQuery<TState, TOperationEvent,T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        
 
 
-        public OperationStack<TState, TOperationEvent> Finally(Func<ICommand<TState, TOperationEvent>, Task<BlockResultVoid>> op)
+
+        public OperationStack<TInput, TState, TOperationEvent> Finally(Func<ICommand<TInput, TState, TOperationEvent>, Task<BlockResultVoid>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> FinallyReturn<T>(Func<IQuery<TState, TOperationEvent>, Task<BlockResult<T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> FinallyReturn<T>(Func<IQuery<TInput, TState, TOperationEvent>, Task<BlockResult<T>>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, T> FinallyReturnOf<T>(Func<ITypedQuery<TState, TOperationEvent,T>, Task<BlockResult<T>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> FinallyReturnOf<T>(Func<ITypedQuery<TInput, TState, TOperationEvent, T>, Task<BlockResult<T>>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
@@ -372,67 +361,67 @@ namespace DomainObjects.Operations
 
         #region OnEvents / Catch
 
-        public OperationStack<TState, TOperationEvent> OnEvents(Func<IEventsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEvents(Func<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> OnEventsOf<TEvent>(Func<IEventsHandler<TEvent, TState, TOperationEvent>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEventsOf<TEvent>(Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent>, BlockResultVoid> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrors(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrors(Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrorsOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrorsOf<TError>(Func<IErrorsHandler<TError, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> Catch(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> Catch(Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchOf<TError>(Func<IErrorsHandler<TError, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException && !x.Error.IsHandled));
         //}
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent,TException, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, x => x.Error.IsException && !x.Error.IsHandled));
@@ -440,67 +429,67 @@ namespace DomainObjects.Operations
 
 
 
-        public OperationStack<TState, TOperationEvent> OnEventsWhere(Func<TOperationEvent, bool> filter, Func<IEventsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEventsWhere(Func<TOperationEvent, bool> filter, Func<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Func<IEventsHandler<TEvent, TState, TOperationEvent>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent>, BlockResultVoid> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrorsWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrorsWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>, BlockResultVoid> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
         //}
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>, BlockResultVoid> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TInput, TState, TOperationEvent>, BlockResultVoid> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
@@ -508,67 +497,67 @@ namespace DomainObjects.Operations
 
 
 
-        public OperationStack<TState, TOperationEvent> OnEvents(Action<IEventsHandler<TOperationEvent, TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEvents(Action<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> OnEventsOf<TEvent>(Action<IEventsHandler<TEvent, TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEventsOf<TEvent>(Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent>> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrors(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrors(Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrorsOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrorsOf<TError>(Action<IErrorsHandler<TError, TInput, TState, TOperationEvent>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
-        
-        public OperationStack<TState, TOperationEvent> OnExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> Catch(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> Catch(Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchOf<TError>(Action<IErrorsHandler<TError, TInput, TState, TOperationEvent>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent>> handler)
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
         //}
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TInput, TState, TOperationEvent>> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler));
@@ -576,67 +565,67 @@ namespace DomainObjects.Operations
 
 
 
-        public OperationStack<TState, TOperationEvent> OnEventsWhere(Func<TOperationEvent, bool> filter, Action<IEventsHandler<TOperationEvent, TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEventsWhere(Func<TOperationEvent, bool> filter, Action<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Action<IEventsHandler<TEvent, TState, TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent>> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrorsWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrorsWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent>> handler)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent>> handler)
+        public OperationStack<TInput, TState, TOperationEvent> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent>> handler)
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
         //}
 
-        //public OperationStack<TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TInput, TState, TOperationEvent>> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, handler, filter));
@@ -645,42 +634,65 @@ namespace DomainObjects.Operations
         #endregion
 
         #region Execute
-
-        public ICommandResult<TState, TOperationEvent> Execute(TState initialState)
+        public ICommandResult<TInput, TState, TOperationEvent> Execute(TInput input, TState initialState)
         {
-            return internalStack.Execute(initialState);
+            //TODO: Assert Input
+            return internalStack.Execute(input, initialState);
         }
 
-        public Task<ICommandResult<TState, TOperationEvent>> ExecuteAsync(TState initialState)
+        public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TInput input, TState initialState)
         {
-            return internalStack.ExecuteAsync(initialState);
+            //TODO: Assert Input
+            return internalStack.ExecuteAsync(input, initialState);
         }
 
-        public ICommandResult<TState, TOperationEvent> Execute()
+        public ICommandResult<TInput, TState, TOperationEvent> Execute(TInput input)
         {
-            return internalStack.Execute(default(TState));
+            //TODO: Assert Input
+            return internalStack.Execute(input);
         }
 
-        public Task<ICommandResult<TState, TOperationEvent>> ExecuteAsync()
+        public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TInput input)
         {
-            return internalStack.ExecuteAsync(default(TState));
+            //TODO: Assert Input
+            return internalStack.ExecuteAsync(input);
+        }
+
+        public ICommandResult<TInput, TState, TOperationEvent> Execute(TState initialState)
+        {
+            return this.Execute(default(TInput), initialState);
+        }
+
+        public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TState initialState)
+        {
+            return this.ExecuteAsync(default(TInput), initialState);
+        }
+
+        public ICommandResult<TInput, TState, TOperationEvent> Execute()
+        {
+            return this.Execute(default(TInput));
+        }
+
+        public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync()
+        {
+            return this.ExecuteAsync(default(TInput));
         }
 
         ICommandResult<TOperationEvent> ICommandOperation<TOperationEvent>.Execute()
         {
-            return internalStack.Execute(default(TState));
+            return this.Execute(default(TInput));
         }
 
         async Task<ICommandResult<TOperationEvent>> ICommandOperation<TOperationEvent>.ExecuteAsync()
         {
-            return await internalStack.ExecuteAsync(default(TState)).ConfigureAwait(false);
+            return await this.ExecuteAsync(default(TInput)).ConfigureAwait(false);
         }
 
         #endregion Result
     }
 
-    
-    public class OperationStack<TState, TOperationEvent, T> : IQueryOperation<TState, TOperationEvent, T>
+
+    public class OperationStack<TInput, TState, TOperationEvent, T> : IQueryOperation<TInput, TState, TOperationEvent, T>
         where TOperationEvent : OperationEvent
     {
         #region Fields and Props
@@ -690,183 +702,165 @@ namespace DomainObjects.Operations
         bool IOperation.SupportsAsync => internalStack.Options.SupportsAsync;
         bool IOperation.PreferAsync => internalStack.Options.PreferAsync;
 
-        private OperationStackInternal<TState, TOperationEvent> internalStack = new OperationStackInternal<TState, TOperationEvent>();
-        private StackBlockSpecBuilder<TState, TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TState, TOperationEvent>();
-        
+        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>();
+        private StackBlockSpecBuilder<TInput, TState, TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TInput, TState, TOperationEvent>();
+
         #endregion Fields and Props
 
         #region Ctor
-        
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TState,TOperationEvent>> blocks, OperationStackOptions options)
+
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> intialStateBuilder)
         {
-            internalStack.Blocks = new StackBlocks<TState, TOperationEvent>(blocks);
+            internalStack.Blocks = new StackBlocks<TInput, TState, TOperationEvent>(blocks);
             internalStack.Options = options;
+            internalStack.InitialStateBuilder = intialStateBuilder;
         }
 
         #endregion Ctor
 
         #region Sync
 
-        public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent, T>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Func<ICommand<TInput, TState, TOperationEvent, T>, BlockResultVoid> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Then(Action<ICommand<TState, TOperationEvent, T>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Action<ICommand<TInput, TState, TOperationEvent, T>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
 
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturn<Tout>(Func<IQuery<TState, TOperationEvent,T>, BlockResult<Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturn<Tout>(Func<IQuery<TInput, TState, TOperationEvent, T>, BlockResult<Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturnOf<Tout>(Func<ITypedQuery<TState, TOperationEvent,T, Tout>, BlockResult<Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturnOf<Tout>(Func<ITypedQuery<TInput, TState, TOperationEvent, T, Tout>, BlockResult<Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TInput, TState, TOperationEvent,T>, ICommandResult<TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(Func<IStackBlock<TState, TOperationEvent,T>, IQueryResult<TOperationEvent,Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(Func<IStackBlock<TInput, TState, TOperationEvent, T>, IQueryResult<TOperationEvent, Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(ICommandResult<TOperationEvent> res)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandResult<TOperationEvent> res)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryResult<TOperationEvent,Tout> res)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryResult<TOperationEvent, Tout> res)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(ICommandOperation<TOperationEvent> operation)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandOperation<TOperationEvent> operation)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(ICommandOperation<TState, TOperationEvent> operation)
+        //TODO: Handle inner stack with same state type
+        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandOperation<TInput,TState, TOperationEvent> operation)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
+        //}
+
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryOperation<TOperationEvent, Tout> operation)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
+            return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(IQueryOperation<TOperationEvent, T> operation)
-        {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
-        }
-
-        public OperationStack<TState, TOperationEvent, T> ThenAppend<T>(IQueryOperation<TState, TOperationEvent, T> operation)
-        {
-            return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
-        }
+        //public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryOperation<TInput,TState, TOperationEvent, Tout> operation)
+        //{
+        //    return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
+        //}
 
 
-        public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent, T>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent, T>, BlockResultVoid> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Then(string tag, Action<ICommand<TState, TOperationEvent, T>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Action<ICommand<TInput, TState, TOperationEvent, T>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturn<Tout>(string tag, Func<IQuery<TState, TOperationEvent,T>, BlockResult<Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturn<Tout>(string tag, Func<IQuery<TInput, TState, TOperationEvent, T>, BlockResult<Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturnOf<Tout>(string tag, Func<ITypedQuery<TState, TOperationEvent,T, Tout>, BlockResult<Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturnOf<Tout>(string tag, Func<ITypedQuery<TInput, TState, TOperationEvent, T, Tout>, BlockResult<Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TInput, TState, TOperationEvent>, ICommandResult<TOperationEvent>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, Func<IStackBlock<TState, TOperationEvent,T>, IQueryResult<TOperationEvent,Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, Func<IStackBlock<TInput, TState, TOperationEvent, T>, IQueryResult<TOperationEvent, Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandResult<TOperationEvent> res)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandResult<TOperationEvent> res)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryResult<TOperationEvent,Tout> res)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryResult<TOperationEvent, Tout> res)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, (op) => res, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, (op) => res));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TOperationEvent> operation)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TOperationEvent> operation)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TState, TOperationEvent> operation)
-        {
-            return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
-        }
+        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TInput,TState, TOperationEvent> operation)
+        //{
+        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
+        //}
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TOperationEvent, Tout> operation)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TOperationEvent, Tout> operation)
         {
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TState, TOperationEvent, Tout> operation)
-        {
-            return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
-        }
+        //public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TInput,TState, TOperationEvent, Tout> operation)
+        //{
+        //    return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
+        //}
 
-        public OperationStack<TState, TOperationEvent> Finally(Func<ICommand<TState, TOperationEvent, T>, BlockResultVoid> op)
+        public OperationStack<TInput, TState, TOperationEvent> Finally(Func<ICommand<TInput, TState, TOperationEvent, T>, BlockResultVoid> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Finally(Action<ICommand<TState, TOperationEvent, T>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Finally(Action<ICommand<TInput, TState, TOperationEvent, T>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> FinallyReturn<Tout>(Func<IQuery<TState, TOperationEvent,T>, BlockResult<Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> FinallyReturn<Tout>(Func<IQuery<TInput, TState, TOperationEvent, T>, BlockResult<Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> FinallyReturnOf<Tout>(Func<ITypedQuery<TState, TOperationEvent,T, Tout>, BlockResult<Tout>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> FinallyReturnOf<Tout>(Func<ITypedQuery<TInput, TState, TOperationEvent, T, Tout>, BlockResult<Tout>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Finally));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
@@ -874,94 +868,82 @@ namespace DomainObjects.Operations
 
         #region Async
 
-        public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent, T>, Task<BlockResultVoid>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Func<ICommand<TInput, TState, TOperationEvent, T>, Task<BlockResultVoid>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Then(Func<ICommand<TState, TOperationEvent, T>, Task> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(Func<ICommand<TInput, TState, TOperationEvent, T>, Task> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
 
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturn<Tout>(Func<IQuery<TState, TOperationEvent,T>, Task<BlockResult<Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturn<Tout>(Func<IQuery<TInput, TState, TOperationEvent, T>, Task<BlockResult<Tout>>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturnOf<Tout>(Func<ITypedQuery<TState, TOperationEvent,T, Tout>, Task<BlockResult<Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturnOf<Tout>(Func<ITypedQuery<TInput, TState, TOperationEvent, T, Tout>, Task<BlockResult<Tout>>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(Func<IStackBlock<TState, TOperationEvent,T>, Task<IQueryResult<TOperationEvent,Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(Func<IStackBlock<TInput, TState, TOperationEvent, T>, Task<IQueryResult<TOperationEvent, Tout>>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
 
 
-        public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent, T>, Task<BlockResultVoid>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent, T>, Task<BlockResultVoid>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> Then(string tag, Func<ICommand<TState, TOperationEvent, T>, Task> op)
+        public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent, T>, Task> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturn<Tout>(string tag, Func<IQuery<TState, TOperationEvent,T>, Task<BlockResult<Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturn<Tout>(string tag, Func<IQuery<TInput, TState, TOperationEvent, T>, Task<BlockResult<Tout>>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenReturnOf<Tout>(string tag, Func<ITypedQuery<TState, TOperationEvent,T, Tout>, Task<BlockResult<Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturnOf<Tout>(string tag, Func<ITypedQuery<TInput, TState, TOperationEvent, T, Tout>, Task<BlockResult<Tout>>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> op)
         {
-            //return internalStack.CreateNew(new StackBlockSpecCommand<TState, TOperationEvent, T>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, Func<IStackBlock<TState, TOperationEvent, T>, Task<IQueryResult<TOperationEvent,Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, Func<IStackBlock<TInput, TState, TOperationEvent, T>, Task<IQueryResult<TOperationEvent, Tout>>> op)
         {
-            //return internalStack.CreateNew<Tout>(new StackBlockSpecQuery<TState, TOperationEvent,T, Tout>(tag, internalStack.NextIndex, op, BlockSpecTypes.Operation));
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, op));
         }
 
 
-        public OperationStack<TState, TOperationEvent> Finally(Func<ICommand<TState, TOperationEvent, T>, Task<BlockResultVoid>> op)
+        public OperationStack<TInput, TState, TOperationEvent> Finally(Func<ICommand<TInput, TState, TOperationEvent, T>, Task<BlockResultVoid>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> FinallyReturn<Tout>(Func<IQuery<TState, TOperationEvent,T>, Task<BlockResult<Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> FinallyReturn<Tout>(Func<IQuery<TInput, TState, TOperationEvent, T>, Task<BlockResult<Tout>>> op)
         {
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent, Tout> FinallyReturnOf<Tout>(Func<ITypedQuery<TState, TOperationEvent,T, Tout>, Task<BlockResult<Tout>>> op)
+        public OperationStack<TInput, TState, TOperationEvent, Tout> FinallyReturnOf<Tout>(Func<ITypedQuery<TInput, TState, TOperationEvent, T, Tout>, Task<BlockResult<Tout>>> op)
         {
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
         }
@@ -971,67 +953,67 @@ namespace DomainObjects.Operations
         #region OnEvents / Catch
 
 
-        public OperationStack<TState, TOperationEvent,T> OnEvents(Func<IEventsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEvents(Func<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnEventsOf<TEvent>(Func<IEventsHandler<TEvent, TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEventsOf<TEvent>(Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrors(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrors(Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrorsOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrorsOf<TError>(Func<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptions(Func<IExceptionsErrorHandler<TOperationEvent,Exception,TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> Catch(Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> Catch(Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchOf<TError>(Func<IErrorsHandler<TError, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchOf<TError>(Func<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptions(Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent,T>, BlockResult<T>> handler)
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         //}
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
@@ -1042,67 +1024,67 @@ namespace DomainObjects.Operations
 
 
 
-        public OperationStack<TState, TOperationEvent,T> OnEventsWhere(Func<TOperationEvent, bool> filter, Func<IEventsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEventsWhere(Func<TOperationEvent, bool> filter, Func<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Func<IEventsHandler<TEvent, TState, TOperationEvent,T>, BlockResult<T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrorsWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrorsWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent,Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchWhere(Func<TOperationEvent, bool> filter, Func<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchOfWhere<TError>(Func<TError, bool> filter, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>, BlockResult<T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>, BlockResult<T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent,T>, BlockResult<T>> handler)
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         //}
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>, BlockResult<T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Func<IExceptionsErrorHandler<TOperationEvent,TException, TInput, TState, TOperationEvent,T>, BlockResult<T>> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
@@ -1110,67 +1092,67 @@ namespace DomainObjects.Operations
 
 
 
-        public OperationStack<TState, TOperationEvent,T> OnEvents(Action<IEventsHandler<TOperationEvent, TState, TOperationEvent,T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEvents(Action<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnEventsOf<TEvent>(Action<IEventsHandler<TEvent, TState, TOperationEvent,T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEventsOf<TEvent>(Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent, T>> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrors(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrors(Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrorsOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrorsOf<TError>(Action<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptions(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptions(Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> Catch(Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> Catch(Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchOf<TError>(Action<IErrorsHandler<TError, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchOf<TError>(Action<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptions(Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler));
         }
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptions(Action<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent,T>> handler)
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
         //}
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptionsOf<TException>(Action<IExceptionsErrorHandler<TOperationEvent,TException, TInput, TState, TOperationEvent,T>> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler));
@@ -1180,67 +1162,67 @@ namespace DomainObjects.Operations
 
 
 
-        public OperationStack<TState, TOperationEvent,T> OnEventsWhere(Func<TOperationEvent, bool> filter, Action<IEventsHandler<TOperationEvent, TState, TOperationEvent,T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEventsWhere(Func<TOperationEvent, bool> filter, Action<IEventsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> op)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Action<IEventsHandler<TEvent, TState, TOperationEvent,T>> op)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnEventsOfWhere<TEvent>(Func<TEvent, bool> filter, Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent, T>> op)
             where TEvent : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildEventHandler(internalStack.NextIndex, op, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrorsWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrorsWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnErrorsOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildErrorHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent,T> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,TException, TState, TOperationEvent,T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> OnExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchWhere(Func<TOperationEvent, bool> filter, Action<IErrorsHandler<TOperationEvent, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchOfWhere<TError>(Func<TError, bool> filter, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent, T>> handler)
             where TError : TOperationEvent
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, Exception, TInput, TState, TOperationEvent, T>> handler)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        public OperationStack<TState, TOperationEvent, T> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent, T>> handler)
+        public OperationStack<TInput, TState, TOperationEvent, T> CatchExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TInput, TState, TOperationEvent, T>> handler)
             where TException : Exception
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildCatchExceptionHandler(internalStack.NextIndex, handler, filter));
         }
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TState, TOperationEvent,T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptionsWhere(Func<IOperationExceptionError<TOperationEvent, Exception>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent,Exception, TInput, TState, TOperationEvent,T>> handler)
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
         //}
 
-        //public OperationStack<TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>> handler)
+        //public OperationStack<TInput, TState, TOperationEvent,T> OnUnhandledExceptionsOfWhere<TException>(Func<IOperationExceptionError<TOperationEvent, TException>, bool> filter, Action<IExceptionsErrorHandler<TOperationEvent, TException, TState, TOperationEvent,T>> handler)
         //    where TException : Exception
         //{
         //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildExceptionHandler(internalStack.NextIndex, handler, filter));
@@ -1250,66 +1232,89 @@ namespace DomainObjects.Operations
 
         #region Execute
 
-        public IQueryResult<TState, TOperationEvent,T> Execute(TState initialState)
+        public IQueryResult<TInput, TState, TOperationEvent, T> Execute(TInput input, TState initialState)
         {
-            return internalStack.Execute<T>(initialState);
+            //TODO: Assert Input
+            return internalStack.Execute<T>(input, initialState);
         }
 
-        public Task<IQueryResult<TState, TOperationEvent, T>> ExecuteAsync(TState initialState)
+        public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync(TInput input, TState initialState)
         {
-            return internalStack.ExecuteAsync<T>(initialState);
+            //TODO: Assert Input
+            return internalStack.ExecuteAsync<T>(input, initialState);
         }
 
-        public IQueryResult<TState, TOperationEvent, T> Execute()
+        public IQueryResult<TInput, TState, TOperationEvent,T> Execute(TInput input)
         {
-            return internalStack.Execute<T>(default(TState));
+            //TODO: Assert Input
+            return internalStack.Execute<T>(input);
         }
 
-        public Task<IQueryResult<TState, TOperationEvent, T>> ExecuteAsync()
+        public Task<IQueryResult<TInput, TState, TOperationEvent,T>> ExecuteAsync(TInput input)
         {
-            return internalStack.ExecuteAsync<T>(default(TState));
+            //TODO: Assert Input
+            return internalStack.ExecuteAsync<T>(input);
         }
 
-    
+        public IQueryResult<TInput, TState, TOperationEvent, T> Execute(TState initialState)
+        {
+            return this.Execute(default(TInput), initialState);
+        }
+
+        public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync(TState initialState)
+        {
+            return this.ExecuteAsync(default(TInput), initialState);
+        }
+
+        public IQueryResult<TInput, TState, TOperationEvent, T> Execute()
+        {
+            return this.Execute(default(TInput));
+        }
+
+        public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync()
+        {
+            return this.ExecuteAsync(default(TInput));
+        }
+
         IQueryResult<TOperationEvent, T> IQueryOperation<TOperationEvent, T>.Execute()
         {
-            return internalStack.Execute<T>(default(TState));
+            return this.Execute(default(TInput));
         }
 
         async Task<IQueryResult<TOperationEvent, T>> IQueryOperation<TOperationEvent, T>.ExecuteAsync()
         {
-            return await internalStack.ExecuteAsync<T>(default(TState)).ConfigureAwait(false);
+            return await this.ExecuteAsync(default(TInput)).ConfigureAwait(false);
         }
 
         #endregion Result
     }
 
-    public class OperationStack : OperationStack<object, OperationEvent>
-    {
-        public OperationStack()
-            : base()
-        {
+    //public class OperationStack : OperationStack<object, object, OperationEvent>
+    //{
+    //    public OperationStack()
+    //        : base()
+    //    {
 
-        }
-        public OperationStack(OperationStackOptions options)
-            : base(options)
-        {
+    //    }
+    //    public OperationStack(OperationStackOptions options)
+    //        : base(options)
+    //    {
 
-        }
-    }
+    //    }
+    //}
 
-    public class OperationStack<TOperationEvent> : OperationStack<object, TOperationEvent>
-        where TOperationEvent : OperationEvent
-    {
-        public OperationStack()
-            : base()
-        {
+    //public class OperationStack<TOperationEvent> : OperationStack<object, object, TOperationEvent>
+    //    where TOperationEvent : OperationEvent
+    //{
+    //    public OperationStack()
+    //        : base()
+    //    {
 
-        }
-        public OperationStack(OperationStackOptions options)
-            : base( options)
-        {
+    //    }
+    //    public OperationStack(OperationStackOptions options)
+    //        : base(options)
+    //    {
 
-        }
-    }
+    //    }
+    //}
 }

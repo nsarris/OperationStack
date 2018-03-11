@@ -4,29 +4,31 @@ using System.Linq;
 
 namespace DomainObjects.Operations
 {
-    internal class OperationStackExecutionState<TState, TOperationEvent>
+    internal class OperationStackExecutionState<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
         public TState InitialState { get; private set; }
         public TState State { get; private set; }
+        public TInput StackInput { get; private set; }
         public IEmptyable NextInput { get; private set; } = Emptyable.Empty;
         public IEmptyable LastResult { get; private set; } = Emptyable.Empty;
         private IEmptyable OverrideResult { get; set; } = Emptyable.Empty;
         public bool IsFail { get; private set; }
         public List<BlockTraceResult<TOperationEvent>> StackTrace { get; } = new List<BlockTraceResult<TOperationEvent>>();
-        public StackBlockSpecBase<TState, TOperationEvent> PreviousBlockSpec { get; private set; } 
-        public StackBlockSpecBase<TState, TOperationEvent> CurrentBlockSpec { get; private set; }
+        public StackBlockSpecBase<TInput, TState, TOperationEvent> PreviousBlockSpec { get; private set; } 
+        public StackBlockSpecBase<TInput, TState, TOperationEvent> CurrentBlockSpec { get; private set; }
         OperationStackOptions options;
-        StackBlocks<TState, TOperationEvent> blocks;
+        StackBlocks<TInput, TState, TOperationEvent> blocks;
         private bool GetSuccessState()
         {
             return !IsFail && !StackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled && !x.IsSwallowed);
         }
 
-        public OperationStackExecutionState(OperationStackOptions options, StackBlocks<TState, TOperationEvent> blocks, TState initialState)
+        public OperationStackExecutionState(OperationStackOptions options, StackBlocks<TInput, TState, TOperationEvent> blocks, TInput stackInput, TState initialState)
         {
             this.options = options;
             this.blocks = blocks;
+            StackInput = stackInput;
             CurrentBlockSpec = blocks.GetFirst();
             this.InitialState = initialState;
             State = initialState;
@@ -67,7 +69,7 @@ namespace DomainObjects.Operations
         /// </summary>
         /// <param name="block">The execution block</param>
         /// <param name="blockResult">The execution block result</param>
-        public void HandleBlockResultAndSetNext(StackBlockBase<TState, TOperationEvent> block, IBlockResult blockResult)
+        public void HandleBlockResultAndSetNext(StackBlockBase<TInput, TState, TOperationEvent> block, IBlockResult blockResult)
         {
             PreviousBlockSpec = CurrentBlockSpec;
 
@@ -106,7 +108,7 @@ namespace DomainObjects.Operations
         /// <param name="currentBlock">The current block</param>
         /// <param name="target">The next target</param>
         /// <returns></returns>
-        private StackBlockSpecBase<TState, TOperationEvent> GetNext(StackBlockSpecBase<TState, TOperationEvent> currentBlock,BlockResultTarget target)
+        private StackBlockSpecBase<TInput, TState, TOperationEvent> GetNext(StackBlockSpecBase<TInput, TState, TOperationEvent> currentBlock,BlockResultTarget target)
         {
             switch (target.FlowTarget)
             {
@@ -136,11 +138,11 @@ namespace DomainObjects.Operations
         /// <typeparam name="T"></typeparam>
         /// <param name="isCommand">Command or query flag</param>
         /// <returns></returns>
-        public IOperationResult<TState, TOperationEvent> GetResult<T>(bool isCommand)
+        public IOperationResult<TInput, TState, TOperationEvent> GetResult<T>(bool isCommand)
         {
             return isCommand ?
-                new CommandResult<TState, TOperationEvent>(GetSuccessState(), StackTrace, State) :
-                new QueryResult<TState, TOperationEvent, T>(GetSuccessState(), StackTrace, State, LastResult.ConvertTo<T>());
+                new CommandResult<TInput, TState, TOperationEvent>(GetSuccessState(), StackTrace, StackInput, State) :
+                new QueryResult<TInput, TState, TOperationEvent, T>(GetSuccessState(), StackTrace, StackInput, State, LastResult.ConvertTo<T>());
         }
     }
 }

@@ -67,9 +67,16 @@
     <Compile Include="Events\OperationExceptionError.cs" />
     <Compile Include="Infrastructure\AsyncHelper.cs" />
     <Compile Include="Infrastructure\Extensions.cs" />
+    <Compile Include="Interfaces\IOperation.cs" />
+    <Compile Include="Interfaces\IOperationEvents.cs" />
+    <Compile Include="Interfaces\IOperationExceptionError.cs" />
+    <Compile Include="Interfaces\IOperationResult.cs" />
+    <Compile Include="Interfaces\IQueryResultProxy.cs" />
     <Compile Include="Interfaces\IResultDispatcher.cs" />
+    <Compile Include="Interfaces\IStackEvents.cs" />
     <Compile Include="OperationResult\CommandResult.cs" />
     <Compile Include="OperationResult\QueryResult.cs" />
+    <Compile Include="OperationStackBuilder.cs" />
     <Compile Include="OperationStackInternal.cs" />
     <Compile Include="OperationStackOptions.cs" />
     <Compile Include="OperationStackExecutionState.cs" />
@@ -79,7 +86,7 @@
     <Compile Include="Infrastructure\Emptyable.cs" />
     <Compile Include="Infrastructure\Exceptions.cs" />
     <Compile Include="Infrastructure\ExecutionTime.cs" />
-    <Compile Include="Interfaces\Interfaces.cs" />
+    <Compile Include="Interfaces\IStackBlock.cs" />
     <Compile Include="Blocks\QueryBlock.cs" />
     <Compile Include="Events\OperationEvents.cs" />
     <Compile Include="OperationResult\OperationResult.cs" />

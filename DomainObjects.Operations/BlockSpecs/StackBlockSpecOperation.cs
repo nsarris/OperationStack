@@ -4,12 +4,12 @@ namespace DomainObjects.Operations
 {
 
 
-    internal class StackBlockSpecOperation<TState, TOperationEvent> : StackBlockSpecBase<TState, TOperationEvent>
+    internal class StackBlockSpecOperation<TInput, TState, TOperationEvent> : StackBlockSpecBase<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
+        Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
 
-        public StackBlockSpecOperation(string tag, int index, Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
+        public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
             : base(tag, index, blockType)
         {
             this.blockBuilder = blockBuilder;
@@ -17,18 +17,18 @@ namespace DomainObjects.Operations
 
         public override Type InputType => null;
 
-        public override StackBlockBase<TState, TOperationEvent> CreateBlock(TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        public override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
         {
-            return blockBuilder(state, stackEvents, input);
+            return blockBuilder(stackInput, state, stackEvents, input);
         }
     }
 
-    internal class StackBlockSpecOperation<TState, TOperationEvent, Tin> : StackBlockSpecBase<TState, TOperationEvent>
+    internal class StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin> : StackBlockSpecBase<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder;
+        Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
 
-        public StackBlockSpecOperation(string tag, int index, Func<TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
+        public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
             : base(tag, index, blockType)
         {
             this.blockBuilder = blockBuilder;
@@ -36,9 +36,9 @@ namespace DomainObjects.Operations
 
         public override Type InputType => typeof(Tin);
 
-        public override StackBlockBase<TState, TOperationEvent> CreateBlock(TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        public override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
         {
-            return blockBuilder(state, stackEvents, input);
+            return blockBuilder(stackInput, state, stackEvents, input);
         }
     }
 }

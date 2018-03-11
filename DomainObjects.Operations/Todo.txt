@@ -5,8 +5,8 @@ NOT 4. Refactor dispatcher / result /target to return object that can apply on s
 DONE 5. Test success flow (esp. on appended stacks)
 DONE 6. Refactor event handlers to pass through input 
 NOT Manage success on event handlers (?)
-8. Investigate if Execute can take input other than state
-9. Clean up interfaces
+DONE 8. Investigate if Execute can take input other than state
+DONE 9. Clean up interfaces
 DONE 10. Refactor event handlers, add Catch, handle success flow
 NOT Check partials/nested classes to cut down on generic type clutter
 DONE 12. Complete block handle logic (HandleBlockResultAndSetNext notes)
@@ -18,3 +18,7 @@ DONE 16. Replace IOperationEvent with OperationEvent
 Done 18. Swallow Event
 18. Replace Event
 19. Merge Events
+20. Handle same state and input inners (pass state or input through if same type)
+21. Create with Builder
+22. Assert input in execute
+23. HasState / HasInput and assertions (22)

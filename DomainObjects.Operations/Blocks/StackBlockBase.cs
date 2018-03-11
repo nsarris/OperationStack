@@ -18,7 +18,6 @@ namespace DomainObjects.Operations
         public bool IsAsync => executorAsync != null;
         List<BlockTraceResult<TOperationEvent>> innerStackTrace = new List<BlockTraceResult<TOperationEvent>>();
         public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace => innerStackTrace.AsEnumerable();
-        
         internal virtual IEmptyable Input { get; set; } = Emptyable.Empty;
         public StackBlockBase(string tag, IStackEvents<TOperationEvent> stackEvents)
         {
@@ -151,15 +150,16 @@ namespace DomainObjects.Operations
         }
     }
 
-    internal abstract class StackBlockBase<TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TState, TOperationEvent>
+    internal abstract class StackBlockBase<TInput, TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TInput,TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        public StackBlockBase(string tag, TState state, IStackEvents<TOperationEvent> stackEvents) 
+        public StackBlockBase(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents) 
             : base(tag, stackEvents)
         {
             StackState = state;
+            StackInput = input;
         }
-
+        public TInput StackInput { get; private set; }
         public TState StackState { get; set; }
     }
 }
