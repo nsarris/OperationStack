@@ -19,6 +19,6 @@ Done 18. Swallow Event
 18. Replace Event
 19. Merge Events
 20. Handle same state and input inners (pass state or input through if same type)
-21. Create with Builder
-22. Assert input in execute
-23. HasState / HasInput and assertions (22)
+DONE 21. Create with Builder
+DONE 22. Assert input in execute
+DONE 23. HasState / HasInput and assertions (22)

@@ -8,21 +8,41 @@ namespace DomainObjects.Operations
     internal class OperationStackInternal<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        public OperationStackOptions Options { get; set; } = new OperationStackOptions();
-        public Func<TState> InitialStateBuilder { get; set; } = () => default(TState);
-        public StackBlocks<TInput, TState, TOperationEvent> Blocks { get; set; } = new StackBlocks<TInput, TState, TOperationEvent>();
+        internal OperationStackInternal(OperationStackOptions options, Func<TState> initialStateBuilder, bool hasInput)
+        {
+            Options = options;
+            InitialStateBuilder = initialStateBuilder;
+            HasInput = hasInput;
+        }
+
+        internal OperationStackInternal(OperationStackOptions options, Func<TState> initialStateBuilder, bool hasInput, StackBlocks<TInput, TState, TOperationEvent> blocks)
+            :this(options, initialStateBuilder,hasInput)
+        {
+            Blocks = blocks;
+        }
+        public bool HasInput { get; private set; }
+        public bool HasState => InitialStateBuilder != null;
+        public OperationStackOptions Options { get;private  set; } = new OperationStackOptions();
+        public Func<TState> InitialStateBuilder { get; private set; } = () => default(TState);
+        public StackBlocks<TInput, TState, TOperationEvent> Blocks { get; private set; } = new StackBlocks<TInput, TState, TOperationEvent>();
         public int NextIndex => Blocks.Count;
 
         public OperationStack<TInput, TState, TOperationEvent> CreateNew(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
         {
             Blocks.AssertAddBlock(block);
-            return new OperationStack<TInput, TState, TOperationEvent>(Blocks.Concat(block), Options, InitialStateBuilder);
+            return new OperationStack<TInput, TState, TOperationEvent>(Blocks.Concat(block), Options, InitialStateBuilder, HasInput);
         }
 
         public OperationStack<TInput, TState, TOperationEvent, TResult> CreateNew<TResult>(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
         {
             Blocks.AssertAddBlock(block);
-            return new OperationStack<TInput, TState, TOperationEvent, TResult>(Blocks.Concat(block), Options, InitialStateBuilder);
+            return new OperationStack<TInput, TState, TOperationEvent, TResult>(Blocks.Concat(block), Options, InitialStateBuilder, HasInput);
+        }
+
+        public void AssertInput()
+        {
+            if (HasInput)
+                throw new Exception("OperationStack as declared with Input of type " + typeof(TInput).Name + ". Please use an overload of Execute with input parameter.");
         }
 
 

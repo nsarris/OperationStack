@@ -23,7 +23,7 @@ namespace DomainObjects.Operations
         bool IOperation.SupportsAsync => internalStack.Options.SupportsAsync;
         bool IOperation.PreferAsync => internalStack.Options.PreferAsync;
 
-        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>();
+        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack;
 
         private StackBlockSpecBuilder<TInput, TState, TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TInput, TState, TOperationEvent>();
         #endregion Fields and Props
@@ -42,16 +42,14 @@ namespace DomainObjects.Operations
         /// 
         /// </summary>
         /// <param name="options">Override the default options</param>
-        internal OperationStack(OperationStackOptions options, Func<TState> initialStateBuilder)
+        internal OperationStack(OperationStackOptions options, Func<TState> initialStateBuilder, bool hasInput)
         {
-            internalStack.Options = options;
-            internalStack.InitialStateBuilder = initialStateBuilder;
+            internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>(options, initialStateBuilder, hasInput);
         }
 
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initialStateBuilder)
-            : this(options, initialStateBuilder)
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initialStateBuilder, bool hasInput)
         {
-            internalStack.Blocks = new StackBlocks<TInput, TState, TOperationEvent>(blocks);
+            internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>(options, initialStateBuilder, hasInput, new StackBlocks<TInput, TState, TOperationEvent>(blocks));
         }
 
         #endregion Ctor
@@ -634,57 +632,60 @@ namespace DomainObjects.Operations
         #endregion
 
         #region Execute
+        
         public ICommandResult<TInput, TState, TOperationEvent> Execute(TInput input, TState initialState)
         {
-            //TODO: Assert Input
             return internalStack.Execute(input, initialState);
         }
 
         public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TInput input, TState initialState)
         {
-            //TODO: Assert Input
             return internalStack.ExecuteAsync(input, initialState);
         }
 
         public ICommandResult<TInput, TState, TOperationEvent> Execute(TInput input)
         {
-            //TODO: Assert Input
             return internalStack.Execute(input);
         }
 
         public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TInput input)
         {
-            //TODO: Assert Input
             return internalStack.ExecuteAsync(input);
         }
 
         public ICommandResult<TInput, TState, TOperationEvent> Execute(TState initialState)
         {
+            internalStack.AssertInput();
             return this.Execute(default(TInput), initialState);
         }
 
         public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TState initialState)
         {
+            internalStack.AssertInput();
             return this.ExecuteAsync(default(TInput), initialState);
         }
 
         public ICommandResult<TInput, TState, TOperationEvent> Execute()
         {
+            internalStack.AssertInput();
             return this.Execute(default(TInput));
         }
 
         public Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync()
         {
+            internalStack.AssertInput();
             return this.ExecuteAsync(default(TInput));
         }
 
         ICommandResult<TOperationEvent> ICommandOperation<TOperationEvent>.Execute()
         {
+            internalStack.AssertInput();
             return this.Execute(default(TInput));
         }
 
         async Task<ICommandResult<TOperationEvent>> ICommandOperation<TOperationEvent>.ExecuteAsync()
         {
+            internalStack.AssertInput();
             return await this.ExecuteAsync(default(TInput)).ConfigureAwait(false);
         }
 
@@ -702,18 +703,16 @@ namespace DomainObjects.Operations
         bool IOperation.SupportsAsync => internalStack.Options.SupportsAsync;
         bool IOperation.PreferAsync => internalStack.Options.PreferAsync;
 
-        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>();
+        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack;
         private StackBlockSpecBuilder<TInput, TState, TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TInput, TState, TOperationEvent>();
 
         #endregion Fields and Props
 
         #region Ctor
 
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> intialStateBuilder)
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initalStateBuilder, bool hasInput)
         {
-            internalStack.Blocks = new StackBlocks<TInput, TState, TOperationEvent>(blocks);
-            internalStack.Options = options;
-            internalStack.InitialStateBuilder = intialStateBuilder;
+            internalStack = new OperationStackInternal<TInput, TState, TOperationEvent>(options, initalStateBuilder, hasInput, new StackBlocks<TInput, TState, TOperationEvent>(blocks));
         }
 
         #endregion Ctor
@@ -742,7 +741,7 @@ namespace DomainObjects.Operations
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
         }
 
-        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TInput, TState, TOperationEvent,T>, ICommandResult<TOperationEvent>> op)
+        public OperationStack<TInput, TState, TOperationEvent> ThenAppend(Func<IOperationBlock<TInput, TState, TOperationEvent, T>, ICommandResult<TOperationEvent>> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
@@ -1234,55 +1233,57 @@ namespace DomainObjects.Operations
 
         public IQueryResult<TInput, TState, TOperationEvent, T> Execute(TInput input, TState initialState)
         {
-            //TODO: Assert Input
             return internalStack.Execute<T>(input, initialState);
         }
 
         public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync(TInput input, TState initialState)
         {
-            //TODO: Assert Input
             return internalStack.ExecuteAsync<T>(input, initialState);
         }
 
-        public IQueryResult<TInput, TState, TOperationEvent,T> Execute(TInput input)
+        public IQueryResult<TInput, TState, TOperationEvent, T> Execute(TInput input)
         {
-            //TODO: Assert Input
             return internalStack.Execute<T>(input);
         }
 
-        public Task<IQueryResult<TInput, TState, TOperationEvent,T>> ExecuteAsync(TInput input)
+        public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync(TInput input)
         {
-            //TODO: Assert Input
             return internalStack.ExecuteAsync<T>(input);
         }
 
         public IQueryResult<TInput, TState, TOperationEvent, T> Execute(TState initialState)
         {
+            internalStack.AssertInput();
             return this.Execute(default(TInput), initialState);
         }
 
         public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync(TState initialState)
         {
+            internalStack.AssertInput();
             return this.ExecuteAsync(default(TInput), initialState);
         }
 
         public IQueryResult<TInput, TState, TOperationEvent, T> Execute()
         {
+            internalStack.AssertInput();
             return this.Execute(default(TInput));
         }
 
         public Task<IQueryResult<TInput, TState, TOperationEvent, T>> ExecuteAsync()
         {
+            internalStack.AssertInput();
             return this.ExecuteAsync(default(TInput));
         }
 
         IQueryResult<TOperationEvent, T> IQueryOperation<TOperationEvent, T>.Execute()
         {
+            internalStack.AssertInput();
             return this.Execute(default(TInput));
         }
 
         async Task<IQueryResult<TOperationEvent, T>> IQueryOperation<TOperationEvent, T>.ExecuteAsync()
         {
+            internalStack.AssertInput();
             return await this.ExecuteAsync(default(TInput)).ConfigureAwait(false);
         }
 
