@@ -56,21 +56,30 @@ namespace DomainObjects.Operations
             : base(tag, stackInput, state, stackEvents)
         {
             if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
-                executor = () => { var r = queryOperation.Execute(); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
+                executor = () => {
+                    IQueryResult<TOperationEvent,TResult> r;
+                    if (queryOperation is IQueryOperationWithState<TState, TOperationEvent, TResult> queryOperationWithState)
+                        r = queryOperationWithState.Execute(state);
+                    else
+                        r = queryOperation.Execute();
+
+                    this.Append(r);
+                    return resultDispatcher.Return(r.Result.Value);
+                };
             else
-                executorAsync = async () => { var r = await queryOperation.ExecuteAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(r.Result.Value); };
+                executorAsync = async () => {
+                    IQueryResult<TOperationEvent, TResult> r;
+                    if (queryOperation is IQueryOperationWithState<TState, TOperationEvent, TResult> queryOperationWithState)
+                        r = await queryOperationWithState.ExecuteAsync(state).ConfigureAwait(false);
+                    else
+                        r = await queryOperation.ExecuteAsync().ConfigureAwait(false);
+
+                    this.Append(r);
+                    return resultDispatcher.Return(r.Result.Value);
+                };
         }
 
-
-        //internal QueryBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IQueryOperation<TInput,TState, TOperationEvent, TResult> queryOperation)
-        //    : base(tag, stackInput, state, stackEvents)
-        //{
-        //    if (queryOperation.SupportsAsync && queryOperation.PreferAsync)
-        //        executor = () => { var r = queryOperation.Execute(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
-        //    else
-        //        executorAsync = async () => { var r = await queryOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(r.Result.Value); };
-        //}
-
+      
 
         IQueryResultProxy<T,TState> IQuery<TInput,TState, TOperationEvent>.DefineResult<T>()
         {

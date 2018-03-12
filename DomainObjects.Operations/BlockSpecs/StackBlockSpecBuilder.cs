@@ -108,15 +108,12 @@ namespace DomainObjects.Operations
                 => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, operation), BlockSpecTypes.Operation);
         }
 
-        //public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, ICommandOperation<TInput,TState, TOperationEvent> operation)
-        //{
-        //    tag = HandleOperationTagName(tag, index);
-        //    return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-        //        => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, operation), BlockSpecTypes.Operation);
-        //}
-
-
-
+        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, ICommandOperation<TOperationEvent> operation)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), operation), BlockSpecTypes.Operation);
+        }
 
 
 
@@ -212,15 +209,14 @@ namespace DomainObjects.Operations
                 => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, operation), BlockSpecTypes.Operation);
         }
 
-        //public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, IQueryOperation<TInput,TState, TOperationEvent, TResult> operation)
-        //{
-        //    tag = HandleOperationTagName(tag, index);
-        //    return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-        //        => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, operation), BlockSpecTypes.Operation);
-        //}
+        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, IQueryOperation<TOperationEvent, TResult> operation)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), operation), BlockSpecTypes.Operation);
+        }
 
 
-        
 
         public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally(int index, Func<ICommand<TInput,TState, TOperationEvent>, BlockResultVoid> func)
         {

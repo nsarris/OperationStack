@@ -54,19 +54,37 @@ namespace DomainObjects.Operations
             : base(tag, input, state, stackEvents)
         {
             if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
-                executor = () => { var r = commandOperation.Execute(); this.Append(r); return resultDispatcher.Return(); };
+                executor = () => {
+                    ICommandResult<TOperationEvent> r;
+                    if (commandOperation is ICommandOperationWithState<TState, TOperationEvent> operationWithState)
+                        r = operationWithState.Execute(state);
+                    else
+                        r = commandOperation.Execute();
+
+                    this.Append(r);
+                    return resultDispatcher.Return();
+                };
             else
-                executorAsync = async () => { var r = await commandOperation.ExecuteAsync().ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(); };
+                executorAsync = async () => {
+                    ICommandResult<TOperationEvent> r;
+                    if (commandOperation is ICommandOperationWithState<TState, TOperationEvent> operationWithState)
+                        r = operationWithState.Execute(state);
+                    else
+                        r = await commandOperation.ExecuteAsync().ConfigureAwait(false);
+
+                    this.Append(r);
+                    return resultDispatcher.Return();
+                };
         }
 
 
-        //internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, ICommandOperation<TInput,TState, TOperationEvent> commandOperation)
+        //internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, ICommandOperationWithState<TState, TOperationEvent> commandOperation)
         //    : base(tag, input, state, stackEvents)
         //{
         //    if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
-        //        executor = () => { var r = commandOperation.Execute(state); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
+        //        executor = () => { var r = commandOperation.Execute(state); this.Append(r); this.StackState = (TState)r.StackState; return resultDispatcher.Return(); };
         //    else
-        //        executorAsync = async () => { var r = await commandOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = r.StackState; return resultDispatcher.Return(); };
+        //        executorAsync = async () => { var r = await commandOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = (TState)r.StackState; return resultDispatcher.Return(); };
         //}
 
         BlockResultVoid IResultVoidDispatcher<TState>.Fail()

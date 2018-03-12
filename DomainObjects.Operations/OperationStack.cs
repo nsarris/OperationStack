@@ -689,6 +689,31 @@ namespace DomainObjects.Operations
             return await this.ExecuteAsync(default(TInput)).ConfigureAwait(false);
         }
 
+        ICommandResult<TOperationEvent> ICommandOperationWithInput<TInput, TOperationEvent>.Execute(TInput input)
+        {
+            internalStack.AssertInput();
+            return this.Execute(default(TInput));
+        }
+
+        async Task<ICommandResult<TOperationEvent>> ICommandOperationWithInput<TInput, TOperationEvent>.ExecuteAsync(TInput input)
+        {
+            return await this.ExecuteAsync(input).ConfigureAwait(false);
+        }
+
+        ICommandResult<TOperationEvent> ICommandOperationWithState<TState, TOperationEvent>.Execute(TState initialState)
+        {
+            internalStack.AssertInput();
+            return this.Execute(default(TInput), initialState);
+        }
+
+        async Task<ICommandResult<TOperationEvent>> ICommandOperationWithState<TState, TOperationEvent>.ExecuteAsync(TState initialState)
+        {
+            internalStack.AssertInput();
+            return await this.ExecuteAsync(default(TInput), initialState).ConfigureAwait(false);
+        }
+
+
+
         #endregion Result
     }
 
@@ -763,7 +788,7 @@ namespace DomainObjects.Operations
 
         public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandOperation<TOperationEvent> operation)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCommand<T>(null, internalStack.NextIndex, operation));
         }
 
         //TODO: Handle inner stack with same state type
@@ -774,7 +799,7 @@ namespace DomainObjects.Operations
 
         public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryOperation<TOperationEvent, Tout> operation)
         {
-            return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
+            return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery<T,Tout>(null, internalStack.NextIndex, operation));
         }
 
         //public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryOperation<TInput,TState, TOperationEvent, Tout> operation)
@@ -825,7 +850,7 @@ namespace DomainObjects.Operations
 
         public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TOperationEvent> operation)
         {
-            return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
+            return internalStack.CreateNew(blockSpecBuilder.BuildCommand<T>(tag, internalStack.NextIndex, operation));
         }
 
         //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TInput,TState, TOperationEvent> operation)
@@ -835,7 +860,7 @@ namespace DomainObjects.Operations
 
         public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TOperationEvent, Tout> operation)
         {
-            return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
+            return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery<T, Tout>(tag, internalStack.NextIndex, operation));
         }
 
         //public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TInput,TState, TOperationEvent, Tout> operation)
@@ -1285,6 +1310,27 @@ namespace DomainObjects.Operations
         {
             internalStack.AssertInput();
             return await this.ExecuteAsync(default(TInput)).ConfigureAwait(false);
+        }
+
+        IQueryResult<TOperationEvent, T> IQueryOperationWithInput<TInput, TOperationEvent, T>.Execute(TInput input)
+        {
+            return this.Execute(input);
+        }
+
+        async Task<IQueryResult<TOperationEvent, T>> IQueryOperationWithInput<TInput, TOperationEvent, T>.ExecuteAsync(TInput input)
+        {
+            return await this.ExecuteAsync(input).ConfigureAwait(false);
+        }
+
+        IQueryResult<TOperationEvent, T> IQueryOperationWithState<TState, TOperationEvent, T>.Execute(TState initialState)
+        {
+            internalStack.AssertInput();
+            return this.Execute(initialState);
+        }
+
+        async Task<IQueryResult<TOperationEvent, T>> IQueryOperationWithState<TState, TOperationEvent, T>.ExecuteAsync(TState initialState)
+        {
+            return await this.ExecuteAsync(initialState).ConfigureAwait(false);
         }
 
         #endregion Result
