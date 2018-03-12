@@ -233,24 +233,12 @@ namespace DomainObjects.Operations
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
         }
-
-        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TInput,TState, TOperationEvent> operation)
-        //{
-        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
-        //}
-
+          
         public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryOperation<TOperationEvent, T> operation)
         {
             return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
         }
-
-        //public OperationStack<TInput, TState, TOperationEvent, T> ThenAppend<T>(string tag, IQueryOperation<TInput,TState, TOperationEvent, T> operation)
-        //{
-        //    return internalStack.CreateNew<T>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
-        //}
-
-
-
+              
         public OperationStack<TInput, TState, TOperationEvent> Finally(Func<ICommand<TInput, TState, TOperationEvent>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildFinally(internalStack.NextIndex, op));
@@ -754,8 +742,6 @@ namespace DomainObjects.Operations
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, op));
         }
 
-
-
         public OperationStack<TInput, TState, TOperationEvent, Tout> ThenReturn<Tout>(Func<IQuery<TInput, TState, TOperationEvent, T>, BlockResult<Tout>> op)
         {
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, op));
@@ -791,23 +777,13 @@ namespace DomainObjects.Operations
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand<T>(null, internalStack.NextIndex, operation));
         }
 
-        //TODO: Handle inner stack with same state type
-        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(ICommandOperation<TInput,TState, TOperationEvent> operation)
-        //{
-        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(null, internalStack.NextIndex, operation));
-        //}
-
+     
         public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryOperation<TOperationEvent, Tout> operation)
         {
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery<T,Tout>(null, internalStack.NextIndex, operation));
         }
 
-        //public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(IQueryOperation<TInput,TState, TOperationEvent, Tout> operation)
-        //{
-        //    return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(null, internalStack.NextIndex, operation));
-        //}
-
-
+     
         public OperationStack<TInput, TState, TOperationEvent> Then(string tag, Func<ICommand<TInput, TState, TOperationEvent, T>, BlockResultVoid> op)
         {
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, op));
@@ -853,20 +829,10 @@ namespace DomainObjects.Operations
             return internalStack.CreateNew(blockSpecBuilder.BuildCommand<T>(tag, internalStack.NextIndex, operation));
         }
 
-        //public OperationStack<TInput, TState, TOperationEvent> ThenAppend(string tag, ICommandOperation<TInput,TState, TOperationEvent> operation)
-        //{
-        //    return internalStack.CreateNew(blockSpecBuilder.BuildCommand(tag, internalStack.NextIndex, operation));
-        //}
-
         public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TOperationEvent, Tout> operation)
         {
             return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery<T, Tout>(tag, internalStack.NextIndex, operation));
         }
-
-        //public OperationStack<TInput, TState, TOperationEvent, Tout> ThenAppend<Tout>(string tag, IQueryOperation<TInput,TState, TOperationEvent, Tout> operation)
-        //{
-        //    return internalStack.CreateNew<Tout>(blockSpecBuilder.BuildQuery(tag, internalStack.NextIndex, operation));
-        //}
 
         public OperationStack<TInput, TState, TOperationEvent> Finally(Func<ICommand<TInput, TState, TOperationEvent, T>, BlockResultVoid> op)
         {
