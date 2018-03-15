@@ -79,7 +79,7 @@ namespace DomainObjects.Operations
 
             //Handle Reset state in case of reset
             State = blockResult.Target.FlowTarget == BlockFlowTarget.Reset ?
-                    (blockResult.Target.ResetStateSet ? (TState)Convert.ChangeType(blockResult.Target.State,typeof(TState)): default(TState)) :
+                    (blockResult.Target.ResetStateSet ? (TState)Convert.ChangeType(blockResult.Target.State, typeof(TState)) : default(TState)) :
                     block.StackState;
 
             //Check fail state
@@ -89,17 +89,24 @@ namespace DomainObjects.Operations
             //Override result is only applicable on Complete. Cache here in case of finally
             OverrideResult = blockResult.Target.OverrideResult;
 
-            //Set last result
-            LastResult = blockResult.Result;
-
             //Set next input
             NextInput = blockResult.GetNextInput();//Get target.OverrideInput.IsEmpty ? blockResult.Result : target.OverrideInput;
-            
+
             //Get next block to execute
             CurrentBlockSpec = IsFail ? blocks.GotoEnd(CurrentBlockSpec.Index) : GetNext(CurrentBlockSpec, blockResult.Target);
 
             //If complete set overriden result if any
-            if (CurrentBlockSpec == null && OverrideResult.HasValue) blockResult.OverrideResult(OverrideResult);
+            if (CurrentBlockSpec == null && OverrideResult.HasValue)
+            {
+                //Set last result
+                LastResult = OverrideResult;
+                blockResult.OverrideResult(OverrideResult);
+            }
+            else
+            {
+                //Set last result
+                LastResult = blockResult.Result;
+            }
         }
 
         /// <summary>
