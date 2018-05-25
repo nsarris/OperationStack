@@ -13,6 +13,7 @@ namespace DomainObjects.Operations
     {
         IStackEvents<TOperationEvent> StackEvents { get; }
         void Throw(TOperationEvent error);
+        string Tag { get; }
     }
 
     public interface IStackBlock<TInput, TState, TOperationEvent> : IStackBlock<TOperationEvent>
