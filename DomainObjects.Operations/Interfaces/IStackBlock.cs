@@ -19,7 +19,6 @@ namespace DomainObjects.Operations
     public interface IStackBlock<TInput, TState, TOperationEvent> : IStackBlock<TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        //bool PreviousBlockSuccess { get; }
         TState StackState { get; set; }
         TInput StackInput { get; }
     }

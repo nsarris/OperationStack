@@ -61,11 +61,11 @@ namespace DomainObjects.Operations
             return HasValue ? value : defaultValue;
         }
 
-        public override bool Equals(object other)
+        public override bool Equals(object obj)
         {
-            if (!HasValue) return other == null;
-            if (other == null) return false;
-            return value.Equals(other);
+            if (!HasValue) return obj == null;
+            if (obj == null) return false;
+            return value.Equals(obj);
         }
 
         public override int GetHashCode()

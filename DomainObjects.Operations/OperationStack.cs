@@ -33,14 +33,6 @@ namespace DomainObjects.Operations
         /// <summary>
         /// 
         /// </summary>
-        //public OperationStack()
-        //{
-
-        //}
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="options">Override the default options</param>
         internal OperationStack(OperationStackOptions options, Func<TState> initialStateBuilder, bool hasInput)
         {

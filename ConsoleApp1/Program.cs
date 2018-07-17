@@ -31,11 +31,21 @@ namespace ConsoleApp1
 
     }
 
+    
+    
+    class MyOperationStackBuilder : OperationStackBuilder<MyOperationEvent>
+    {
+
+    }
+
     class Program
     {
+        
+
         static void Main(string[] args)
         {
-            
+
+
         }
 
 

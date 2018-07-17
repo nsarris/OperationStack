@@ -9,9 +9,9 @@ namespace DomainObjects.Operations
     public class OperationStackBuilder<TInput, TState, TOperationEvent> 
         where TOperationEvent : OperationEvent
     {
-        Func<TState> initialStateBuilder = () => default(TState);
-        OperationStackOptions options = new OperationStackOptions();
-        bool hasInput = false;
+        private readonly Func<TState> initialStateBuilder = () => default(TState);
+        private readonly OperationStackOptions options = new OperationStackOptions();
+        private readonly bool hasInput = false;
 
         public OperationStackBuilder()
         {
@@ -37,7 +37,7 @@ namespace DomainObjects.Operations
         public OperationStackBuilder<TInput, T, TOperationEvent> WithState<T>(Func<T> initialStateBuilder)
         {
             if (initialStateBuilder == null)
-                throw new ArgumentNullException("Initial state builder cannot be null");
+                throw new ArgumentNullException(nameof(initialStateBuilder), "Initial state builder cannot be null");
 
             return new OperationStackBuilder<TInput, T, TOperationEvent>(options, initialStateBuilder,hasInput);
         }

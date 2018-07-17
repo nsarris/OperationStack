@@ -22,7 +22,7 @@ namespace DomainObjects.Operations
 
         IEnumerable<OperationEvent> IOperationResult.Events => Events;
 
-        public OperationResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TInput stackInput, TState stackState)
+        protected OperationResult(bool success, IEnumerable<BlockTraceResult<TOperationEvent>> stackTrace, TInput stackInput, TState stackState)
         {
             Success = success;
             StackState = stackState;

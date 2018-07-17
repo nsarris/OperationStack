@@ -17,8 +17,9 @@ namespace DomainObjects.Operations
         public List<BlockTraceResult<TOperationEvent>> StackTrace { get; } = new List<BlockTraceResult<TOperationEvent>>();
         public StackBlockSpecBase<TInput, TState, TOperationEvent> PreviousBlockSpec { get; private set; } 
         public StackBlockSpecBase<TInput, TState, TOperationEvent> CurrentBlockSpec { get; private set; }
-        OperationStackOptions options;
-        StackBlocks<TInput, TState, TOperationEvent> blocks;
+
+        private readonly OperationStackOptions options;
+        private readonly StackBlocks<TInput, TState, TOperationEvent> blocks;
         private bool GetSuccessState()
         {
             return !IsFail && !StackTrace.SelectMany(x => x.FlattenedEvents).Any(x => !x.IsHandled && !x.IsSwallowed);
@@ -90,7 +91,7 @@ namespace DomainObjects.Operations
             OverrideResult = blockResult.Target.OverrideResult;
 
             //Set next input
-            NextInput = blockResult.GetNextInput();//Get target.OverrideInput.IsEmpty ? blockResult.Result : target.OverrideInput;
+            NextInput = blockResult.GetNextInput();
 
             //Get next block to execute
             CurrentBlockSpec = IsFail ? blocks.GotoEnd(CurrentBlockSpec.Index) : GetNext(CurrentBlockSpec, blockResult.Target);
