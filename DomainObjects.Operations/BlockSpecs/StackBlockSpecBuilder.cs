@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal class StackBlockSpecBuilder<TInput, TState, TOperationEvent>
+    internal static class StackBlockSpecBuilder<TStackInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
         private const string BLOCK_TAG = "Block";
         private const string FINALLY_TAG = "Finally";
 
-        private string HandleOperationTagName(string tag, int index)
+        private static string HandleOperationTagName(string tag, int index)
         {
             if (string.IsNullOrEmpty(tag))
                 return BLOCK_TAG + "_" + index.ToString();
@@ -17,447 +17,244 @@ namespace DomainObjects.Operations
                 return tag;
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<ICommand<TInput,TState, TOperationEvent>, BlockResultVoid> func)
+        // CatchExceptionHandler
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCatchExceptionHandler<TError, TException, TBlockInput>(int index, Action<IExceptionsErrorHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
+            where TException : Exception
+            where TError : TOperationEvent
+        {
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter, false, true));
+        }
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCatchExceptionHandler<TError, TException, TBlockInput>(int index, Func<IExceptionsErrorHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TBlockInput>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
+            where TException : Exception
+            where TError : TOperationEvent
+        {
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter, false, true));
+        }
+
+        // CatchHandler
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCatchHandler<TError, TBlockInput>(int index, Action<IErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>> func, Func<TError, bool> filter = null)
+            where TError : TOperationEvent
+        {
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter, false, true));
+        }
+
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCatchHandler<TError, TBlockInput>(int index, Func<IErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TBlockInput>> func, Func<TError, bool> filter = null)
+            where TError : TOperationEvent
+        {
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter, false, true));
+        }
+
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<IOperationBlock<TStackInput, TState, TOperationEvent>, ICommandResult<TOperationEvent>> func)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(tag,stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, Action<ICommand<TInput,TState, TOperationEvent>> action)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<IOperationBlock<TStackInput,TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> asyncFunc)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput,TState, TOperationEvent>(tag, stackInput, state, stackEvents, action), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
+                => new CommandBlock<TStackInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent>, ICommandResult<TOperationEvent>> func)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand<TBlockInput>(string tag, int index, Func<ICommand<TStackInput,TState, TOperationEvent, TBlockInput>, BlockResultVoid> func)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<ICommand<TInput,TState, TOperationEvent>, Task<BlockResultVoid>> asyncFunc)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand<TBlockInput>(string tag, int index, Action<ICommand<TStackInput,TState, TOperationEvent, TBlockInput>> action)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), action), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<ICommand<TInput,TState, TOperationEvent>, Task> asyncAction)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand<TBlockInput>(string tag, int index, Func<ICommand<TStackInput, TState, TOperationEvent, TBlockInput>, Task<BlockResultVoid>> asyncFunc)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, asyncAction), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncFunc), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> asyncFunc)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand<TBlockInput>(string tag, int index, Func<ICommand<TStackInput, TState, TOperationEvent, TBlockInput>, Task> asyncAction)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncAction), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, Func<ICommand<TInput,TState, TOperationEvent, Tin>, BlockResultVoid> func)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand<TBlockInput>(string tag, int index, Func<IOperationBlock<TStackInput, TState, TOperationEvent, TBlockInput>, ICommandResult<TOperationEvent>> func)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, Action<ICommand<TInput,TState, TOperationEvent, Tin>> action)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildCommand<TBlockInput>(string tag, int index, ICommandOperation<TOperationEvent> operation)
         {
             tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), action), BlockSpecTypes.Operation);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), operation), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent, Tin>, ICommandResult<TOperationEvent>> func)
+        // ErrorHandler
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildErrorHandler<TError, TBlockInput>(int index, Action<IErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>> func, Func<TError, bool> filter = null)
+            where TError : TOperationEvent
         {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Operation);
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, Func<ICommand<TInput,TState, TOperationEvent, Tin>, Task<BlockResultVoid>> asyncFunc)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildErrorHandler<TError, TBlockInput>(int index, Func<IErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TBlockInput>> func, Func<TError, bool> filter = null)
+            where TError : TOperationEvent
         {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ErrorsHandler<TError, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, Func<ICommand<TInput,TState, TOperationEvent, Tin>, Task> asyncAction)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), asyncAction), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent, Tin>, Task<ICommandResult<TOperationEvent>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand(string tag, int index, ICommandOperation<TOperationEvent> operation)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(tag, stackInput, state, stackEvents, operation), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCommand<Tin>(string tag, int index, ICommandOperation<TOperationEvent> operation)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), operation), BlockSpecTypes.Operation);
-        }
-
-
-
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<IQuery<TInput,TState, TOperationEvent>, BlockResult<TResult>> func)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<ITypedQuery<TInput,TState, TOperationEvent, TResult>, BlockResult<TResult>> func)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent>, IQueryResult<TOperationEvent, TResult>> func)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<IQuery<TInput,TState, TOperationEvent>, Task<BlockResult<TResult>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<ITypedQuery<TInput,TState, TOperationEvent, TResult>, Task<BlockResult<TResult>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent>, Task<IQueryResult<TOperationEvent, TResult>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, Func<IQuery<TInput,TState, TOperationEvent, Tin>, BlockResult<TResult>> func)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, Func<ITypedQuery<TInput,TState, TOperationEvent, Tin, TResult>, BlockResult<TResult>> action)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), action), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent, Tin>, IQueryResult<TOperationEvent, TResult>> func)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, Func<IQuery<TInput,TState, TOperationEvent, Tin>, Task<BlockResult<TResult>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, Func<ITypedQuery<TInput,TState, TOperationEvent, Tin, TResult>, Task<BlockResult<TResult>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, Func<IOperationBlock<TInput,TState, TOperationEvent, Tin>, Task<IQueryResult<TOperationEvent, TResult>>> asyncFunc)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), asyncFunc), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, IQueryOperation<TOperationEvent, TResult> operation)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, operation), BlockSpecTypes.Operation);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildQuery<Tin, TResult>(string tag, int index, IQueryOperation<TOperationEvent, TResult> operation)
-        {
-            tag = HandleOperationTagName(tag, index);
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(tag, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<Tin>(), operation), BlockSpecTypes.Operation);
-        }
-
-
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally(int index, Func<ICommand<TInput,TState, TOperationEvent>, BlockResultVoid> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new CommandBlock<TInput, TState, TOperationEvent>(FINALLY_TAG, stackInput, state, stackEvents, func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally(int index, Action<ICommand<TInput,TState, TOperationEvent>> action)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(FINALLY_TAG, stackInput, state, stackEvents, action), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<TResult>(int index, Func<IQuery<TInput,TState, TOperationEvent>, BlockResult<TResult>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(FINALLY_TAG, stackInput, state, stackEvents, func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<TResult>(int index, Func<ITypedQuery<TInput,TState, TOperationEvent, TResult>, BlockResult<TResult>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(FINALLY_TAG, stackInput, state, stackEvents, func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally(int index, Func<ICommand<TInput,TState, TOperationEvent>, Task<BlockResultVoid>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent>(FINALLY_TAG, stackInput, state, stackEvents, func), BlockSpecTypes.Finally);
-        }
-        
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<TResult>(int index, Func<IQuery<TInput,TState, TOperationEvent>, Task<BlockResult<TResult>>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(FINALLY_TAG, stackInput, state, stackEvents, func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<TResult>(int index, Func<ITypedQuery<TInput,TState, TOperationEvent, TResult>, Task<BlockResult<TResult>>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, TResult>(FINALLY_TAG, stackInput, state, stackEvents, func), BlockSpecTypes.Finally);
-        }
-
-
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin>(int index, Func<ICommand<TInput,TState, TOperationEvent, Tin>, BlockResultVoid> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent,Tin>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin>(int index, Action<ICommand<TInput,TState, TOperationEvent, Tin>> action)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), action), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin, TResult>(int index, Func<IQuery<TInput,TState, TOperationEvent, Tin>, BlockResult<TResult>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin, TResult>(int index, Func<ITypedQuery<TInput,TState, TOperationEvent,Tin, TResult>, BlockResult<TResult>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin>(int index, Func<ICommand<TInput,TState, TOperationEvent, Tin>, Task<BlockResultVoid>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new CommandBlock<TInput, TState, TOperationEvent, Tin>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin, TResult>(int index, Func<IQuery<TInput,TState, TOperationEvent, Tin>, Task<BlockResult<TResult>>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Finally);
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildFinally<Tin, TResult>(int index, Func<ITypedQuery<TInput,TState, TOperationEvent, Tin,  TResult>, Task<BlockResult<TResult>>> func)
-        {
-            return new StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin>(null, index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new QueryBlock<TInput, TState, TOperationEvent, Tin, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<Tin>(), func), BlockSpecTypes.Finally);
-        }
-     
-
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildEventHandler<TEvent>(int index, Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent>, BlockResultVoid> func, Func<TEvent, bool> filter = null)
+        // EventHandler
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildEventHandler<TEvent, TBlockInput>(int index, Action<IEventsHandler<TEvent, TStackInput, TState, TOperationEvent, TBlockInput>> func, Func<TEvent, bool> filter = null)
             where TEvent : TOperationEvent
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new EventsHandler<TEvent, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter));
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new EventsHandler<TEvent, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildEventHandler<TEvent, Tin>(int index, Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<TEvent, bool> filter = null)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildEventHandler<TEvent, TBlockInput>(int index, Func<IEventsHandler<TEvent, TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TBlockInput>> func, Func<TEvent, bool> filter = null)
             where TEvent : TOperationEvent
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new EventsHandler<TEvent, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter));
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new EventsHandler<TEvent, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildErrorHandler<TError>(int index, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent>, BlockResultVoid> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
-        {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter));
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildErrorHandler<TError, Tin>(int index, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
-        {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter));
-        }
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException>(int index, Func<IExceptionsErrorHandler<TError, TException,TInput, TState, TOperationEvent>, BlockResultVoid> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
+        // ExceptionHandler
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException, TBlockInput>(int index, Action<IExceptionsErrorHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
             where TException : Exception
             where TError : TOperationEvent
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException, Tin>(int index, Func<IExceptionsErrorHandler<TError, TException, TInput, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException, TBlockInput>(int index, Func<IExceptionsErrorHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TBlockInput>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
             where TException : Exception
             where TError : TOperationEvent
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
+            return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
         }
 
-
-
-
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildEventHandler<TEvent>(int index, Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent>> func, Func<TEvent, bool> filter = null)
-            where TEvent : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput, TResult>(int index, Func<IQuery<TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TResult>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new EventsHandler<TEvent, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter));
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Finally);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildEventHandler<TEvent, Tin>(int index, Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent, Tin>> func, Func<TEvent, bool> filter = null)
-            where TEvent : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput, TResult>(int index, Func<IQuery<TStackInput, TState, TOperationEvent, TBlockInput>, Task<BlockResult<TResult>>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new EventsHandler<TEvent, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter));
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Finally);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildErrorHandler<TError>(int index, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent>> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput, TResult>(int index, Func<ITypedQuery<TStackInput, TState, TOperationEvent, TBlockInput, TResult>, Task<BlockResult<TResult>>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter));
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Finally);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildErrorHandler<TError, Tin>(int index, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput, TResult>(int index, Func<ITypedQuery<TStackInput, TState, TOperationEvent, TBlockInput, TResult>, BlockResult<TResult>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter));
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Finally);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException>(int index, Action<IExceptionsErrorHandler<TError, TException,TInput, TState, TOperationEvent>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
-            where TException : Exception
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput>(int index, Action<ICommand<TStackInput, TState, TOperationEvent, TBlockInput>> action)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), action), BlockSpecTypes.Finally);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException, Tin>(int index, Action<IExceptionsErrorHandler<TError, TException, TInput, TState, TOperationEvent, Tin>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
-            where TException : Exception
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput>(int index, Func<ICommand<TStackInput, TState, TOperationEvent, TBlockInput>, BlockResultVoid> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Finally);
         }
 
-
-
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchHandler<TError>(int index, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent>, BlockResultVoid> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput>(int index, Func<ICommand<TStackInput, TState, TOperationEvent, TBlockInput>, Task<BlockResultVoid>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter,false,true));
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(null, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new CommandBlock<TStackInput, TState, TOperationEvent, TBlockInput>(FINALLY_TAG, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Finally);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchHandler<TError, Tin>(int index, Func<IErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
+        // Query
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, Func<IOperationBlock<TStackInput, TState, TOperationEvent, TBlockInput>, IQueryResult<TOperationEvent, TResult>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchExceptionHandler<TError, TException>(int index, Func<IExceptionsErrorHandler<TError, TException,TInput, TState, TOperationEvent>, BlockResultVoid> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
-            where TException : Exception
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, Func<IOperationBlock<TStackInput, TState, TOperationEvent, TBlockInput>, Task<IQueryResult<TOperationEvent, TResult>>> asyncFunc)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncFunc), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchExceptionHandler<TError, TException, Tin>(int index, Func<IExceptionsErrorHandler<TError, TException, TInput, TState, TOperationEvent, Tin>, BlockResult<Tin>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
-            where TException : Exception
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, Func<IQuery<TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TResult>> func)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchHandler<TError>(int index, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent>> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, Func<IQuery<TStackInput, TState, TOperationEvent, TBlockInput>, Task<BlockResult<TResult>>> asyncFunc)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncFunc), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchHandler<TError, Tin>(int index, Action<IErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>> func, Func<TError, bool> filter = null)
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, Func<ITypedQuery<TStackInput, TState, TOperationEvent, TBlockInput, TResult>, BlockResult<TResult>> action)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), action), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchExceptionHandler<TError, TException>(int index, Action<IExceptionsErrorHandler<TError, TException, TInput, TState, TOperationEvent>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
-            where TException : Exception
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, Func<ITypedQuery<TStackInput, TState, TOperationEvent, TBlockInput, TResult>, Task<BlockResult<TResult>>> asyncFunc)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent>("", stackInput, state, stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncFunc), BlockSpecTypes.Operation);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> BuildCatchExceptionHandler<TError, TException, Tin>(int index, Action<IExceptionsErrorHandler<TError, TException, TInput, TState, TOperationEvent, Tin>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
-            where TException : Exception
-            where TError : TOperationEvent
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TBlockInput, TResult>(string tag, int index, IQueryOperation<TOperationEvent, TResult> operation)
         {
-            return new StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin>(index, (TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input) 
-                => new ExceptionsHandler<TError, TException, TInput, TState, TOperationEvent, Tin>("", stackInput, state, input.ConvertTo<Tin>(), stackEvents, func, filter, false, true));
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent, TBlockInput>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TBlockInput, TResult>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), operation), BlockSpecTypes.Operation);
+        }
+
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<IOperationBlock<TStackInput, TState, TOperationEvent>, IQueryResult<TOperationEvent, TResult>> func)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, func), BlockSpecTypes.Operation);
+        }
+
+        public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildQuery<TResult>(string tag, int index, Func<IOperationBlock<TStackInput, TState, TOperationEvent>, Task<IQueryResult<TOperationEvent, TResult>>> asyncFunc)
+        {
+            tag = HandleOperationTagName(tag, index);
+            return new StackBlockSpecOperation<TStackInput, TState, TOperationEvent>(tag, index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+                => new QueryBlock<TStackInput, TState, TOperationEvent, TResult>(tag, stackInput, state, stackEvents, asyncFunc), BlockSpecTypes.Operation);
         }
     }
 }

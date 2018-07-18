@@ -10,7 +10,7 @@ namespace DomainObjects.Operations
         where TOperationEvent : OperationEvent
     {
         public string Tag { get; private set; }
-        
+
         public IStackEvents<TOperationEvent> StackEvents { get; set; }
         public IOperationEvents<TOperationEvent> Events { get; private set; } = new OperationEvents<TOperationEvent>();
         public IEnumerable<TOperationEvent> FlattenedEvents => Events.Concat(innerStackTrace.SelectMany(x => x.FlattenedEvents));
@@ -24,7 +24,7 @@ namespace DomainObjects.Operations
             Tag = tag;
             StackEvents = stackEvents;
         }
-        
+
         protected Func<IBlockResult> executor;
         protected Func<Task<IBlockResult>> executorAsync;
 
@@ -38,7 +38,7 @@ namespace DomainObjects.Operations
         {
             this.Events.Throw(error);
         }
-        
+
         internal IBlockResult Execute(bool measureTime = true)
         {
             if (IsEmptyEventBlock)
@@ -68,7 +68,7 @@ namespace DomainObjects.Operations
                 }
                 return result;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.Events.Throw(e);
                 var result = new BlockResultVoid()
@@ -102,7 +102,7 @@ namespace DomainObjects.Operations
                 {
                     return await executorAsync().ConfigureAwait(false);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     this.Events.Throw(e);
                     return new BlockResultVoid()
@@ -113,7 +113,7 @@ namespace DomainObjects.Operations
                         },
                     };
                 }
-            
+
             //If measure time execute without configure await
             System.Diagnostics.Stopwatch sw = null;
             if (measureTime)
@@ -150,10 +150,10 @@ namespace DomainObjects.Operations
         }
     }
 
-    internal abstract class StackBlockBase<TInput, TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TInput,TState, TOperationEvent>
+    internal abstract class StackBlockBase<TInput, TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        public StackBlockBase(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents) 
+        public StackBlockBase(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
             : base(tag, stackEvents)
         {
             StackState = state;
@@ -162,4 +162,5 @@ namespace DomainObjects.Operations
         public TInput StackInput { get; private set; }
         public TState StackState { get; set; }
     }
+
 }

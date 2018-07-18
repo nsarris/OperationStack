@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal class CommandBlock<TInput, TState, TOperationEvent> : StackBlockBase<TInput, TState, TOperationEvent>, ICommand<TInput,TState, TOperationEvent>
+    internal class CommandBlock<TInput, TState, TOperationEvent> : StackBlockBase<TInput, TState, TOperationEvent>, ICommand<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
         private ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();
@@ -14,37 +14,37 @@ namespace DomainObjects.Operations
 
         }
 
-        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput,TState, TOperationEvent>, BlockResultVoid> func)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput, TState, TOperationEvent>, BlockResultVoid> func)
             : base(tag, input, state, stackEvents)
         {
             executor = () => func(this);
         }
-        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Action<ICommand<TInput,TState, TOperationEvent>> action)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Action<ICommand<TInput, TState, TOperationEvent>> action)
             : base(tag, input, state, stackEvents)
         {
             executor = () => { action(this); return resultDispatcher.Return(); };
         }
 
-        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TInput,TState, TOperationEvent>, ICommandResult<TOperationEvent>> func)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TInput, TState, TOperationEvent>, ICommandResult<TOperationEvent>> func)
             : base(tag, input, state, stackEvents)
         {
             executor = () => { var r = func(this); this.Append(r); return resultDispatcher.Return(); };
         }
 
 
-        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput,TState, TOperationEvent>, Task<BlockResultVoid>> func)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput, TState, TOperationEvent>, Task<BlockResultVoid>> func)
             : base(tag, input, state, stackEvents)
         {
             executorAsync = async () => await func(this).ConfigureAwait(false);
         }
 
-        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput,TState, TOperationEvent>, Task> actionAsync)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<ICommand<TInput, TState, TOperationEvent>, Task> actionAsync)
             : base(tag, input, state, stackEvents)
         {
             executorAsync = async () => { await actionAsync(this).ConfigureAwait(false); return resultDispatcher.Return(); };
         }
 
-        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TInput,TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> func)
+        internal CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IOperationBlock<TInput, TState, TOperationEvent>, Task<ICommandResult<TOperationEvent>>> func)
             : base(tag, input, state, stackEvents)
         {
             executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return resultDispatcher.Return(); };
@@ -54,7 +54,8 @@ namespace DomainObjects.Operations
             : base(tag, input, state, stackEvents)
         {
             if (commandOperation.SupportsAsync && commandOperation.PreferAsync)
-                executor = () => {
+                executor = () =>
+                {
                     ICommandResult<TOperationEvent> r;
                     if (commandOperation is ICommandOperationWithState<TState, TOperationEvent> operationWithState)
                         r = operationWithState.Execute(state);
@@ -65,7 +66,8 @@ namespace DomainObjects.Operations
                     return resultDispatcher.Return();
                 };
             else
-                executorAsync = async () => {
+                executorAsync = async () =>
+                {
                     ICommandResult<TOperationEvent> r;
                     if (commandOperation is ICommandOperationWithState<TState, TOperationEvent> operationWithState)
                         r = operationWithState.Execute(state);

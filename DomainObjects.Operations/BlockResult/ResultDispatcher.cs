@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-
     internal class ResultDispatcher<T, TState> : IResultDispatcher<T, TState>
     {
         public BlockResult<T> Fail()
@@ -55,7 +54,7 @@ namespace DomainObjects.Operations
             };
         }
 
-      
+
         public BlockResult<T> Goto(string tag, object overrideInput)
         {
             return new BlockResult<T>
@@ -164,7 +163,7 @@ namespace DomainObjects.Operations
             };
         }
 
-        
+
         public BlockResult<T> Skip(int i)
         {
             return new BlockResult<T>
@@ -202,4 +201,5 @@ namespace DomainObjects.Operations
             };
         }
     }
+
 }

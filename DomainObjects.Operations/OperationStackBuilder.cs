@@ -48,11 +48,18 @@ namespace DomainObjects.Operations
             return new OperationStackBuilder<TInput, TState, T>(options, initialStateBuilder, hasInput);
         }
 
-        public OperationStack<TInput, TState, TOperationEvent> Build()
+        public OperationStack<TInput, TState, TOperationEvent, IVoid> Build()
         {
-            return new OperationStack<TInput, TState, TOperationEvent>(options, initialStateBuilder, hasInput);
+            return new OperationStack<TInput, TState, TOperationEvent, IVoid>(new List<StackBlockSpecBase<TInput, TState, TOperationEvent>>(), options, initialStateBuilder, hasInput);
         }
     }
+
+    //public abstract class OperationStackBuilder<TInput, TState, TOperationEvent, TOut, TOperationStack>
+    //    where TOperationStack : OperationStack<TInput, TState, TOperationEvent, TOut>
+    //    where TOperationEvent : OperationEvent
+    //{
+    //    public abstract TOperationStack Build();
+    //}
 
     public class OperationStackBuilder : OperationStackBuilder<object, object, OperationEvent>
     {

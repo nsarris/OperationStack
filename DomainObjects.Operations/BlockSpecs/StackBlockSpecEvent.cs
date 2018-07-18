@@ -6,35 +6,39 @@ using System.Text;
 namespace DomainObjects.Operations
 {
 
-    internal class StackBlockSpecEvent<TInput, TState, TOperationEvent> : StackBlockSpecBase<TInput, TState, TOperationEvent>
+    internal class StackBlockSpecEvent<TStackInput, TState, TOperationEvent> : StackBlockSpecBase<TStackInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
+        Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder;
+
         public override Type InputType => null;
-        public StackBlockSpecEvent(int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType = BlockSpecTypes.EventsHandler)
+
+        public StackBlockSpecEvent(int index, Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType = BlockSpecTypes.EventsHandler)
             : base("EventHandler " + index, index, blockType)
         {
             this.blockBuilder = blockBuilder;
         }
 
-        public override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        internal override StackBlockBase<TStackInput, TState, TOperationEvent> CreateBlock(TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
         {
             return blockBuilder(stackInput, state, stackEvents, input);
         }
     }
 
-    internal class StackBlockSpecEvent<TInput, TState, TOperationEvent, Tin> : StackBlockSpecBase<TInput, TState, TOperationEvent>
+    internal class StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput> : StackBlockSpecBase<TStackInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
-        public override Type InputType => typeof(Tin);
-        public StackBlockSpecEvent(int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType = BlockSpecTypes.EventsHandler)
+        Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder;
+
+        public override Type InputType => typeof(TBlockInput);
+
+        public StackBlockSpecEvent(int index, Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType = BlockSpecTypes.EventsHandler)
             : base("EventHandler " + index, index, blockType)
         {
             this.blockBuilder = blockBuilder;
         }
 
-        public override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        internal override StackBlockBase<TStackInput, TState, TOperationEvent> CreateBlock(TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
         {
             return blockBuilder(stackInput, state, stackEvents, input);
         }

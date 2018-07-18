@@ -32,7 +32,7 @@ namespace DomainObjects.Operations
 
         IEnumerable<TError> IErrorsHandler<TError, TInput, TState, TOperationEvent, Tin>.Errors => errors;
 
-        Emptyable<Tin> IEventHandlerWithInput<TInput,TState, TOperationEvent, Tin>.Result => Input;
+        Emptyable<Tin> IEventHandlerWithInput<TInput, TState, TOperationEvent, Tin>.Result => Input;
     }
 
 }

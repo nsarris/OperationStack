@@ -17,7 +17,7 @@ namespace DomainObjects.Operations
 
         public override Type InputType => null;
 
-        public override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        internal override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
         {
             return blockBuilder(stackInput, state, stackEvents, input);
         }
@@ -36,7 +36,7 @@ namespace DomainObjects.Operations
 
         public override Type InputType => typeof(Tin);
 
-        public override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
+        internal override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
         {
             return blockBuilder(stackInput, state, stackEvents, input);
         }
