@@ -24,16 +24,13 @@ namespace DomainObjects.Operations
         }
     }
 
-    public class OperationStack<TInput, TState, TOperationEvent> : OperationStack<TInput, TState, TOperationEvent, IVoid>//ICommandOperation<TInput, TState, TOperationEvent>
+    public class OperationStack<TInput, TState, TOperationEvent> : OperationStack<TInput, TState, TOperationEvent, IVoid>
         where TOperationEvent : OperationEvent
     {
-        #region Ctor
-
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initalStateBuilder, bool hasInput) : base(blocks, options, initalStateBuilder, hasInput)
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initalStateBuilder, bool hasInput) 
+            : base(blocks, options, initalStateBuilder, hasInput)
         {
         }
-
-        #endregion Ctor
     }
 
 
@@ -49,9 +46,8 @@ namespace DomainObjects.Operations
         bool IOperation.PreferAsync => internalStack.Options.PreferAsync;
         public int NextIndex => internalStack.NextIndex;
 
-        private OperationStackInternal<TInput, TState, TOperationEvent> internalStack;
-        //private StackBlockSpecBuilder<TInput, TState, TOperationEvent> blockSpecBuilder = new StackBlockSpecBuilder<TInput, TState, TOperationEvent>();
-
+        private readonly OperationStackInternal<TInput, TState, TOperationEvent> internalStack;
+        
         #endregion Fields and Props
 
         public OperationStack<TInput, TState, TOperationEvent, IVoid> CreateNew(StackBlockSpecBase<TInput, TState, TOperationEvent> block)

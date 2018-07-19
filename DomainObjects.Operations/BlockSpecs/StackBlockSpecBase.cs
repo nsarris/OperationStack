@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    //internal interface IStackBlockSpec
-    //{
-    //    string Tag { get; }
-    //    int Index { get; }
-    //    BlockSpecTypes BlockType { get; }
-    //}
-
     public enum BlockSpecTypes
     {
         Operation,
@@ -29,11 +22,11 @@ namespace DomainObjects.Operations
         public abstract Type InputType { get; }
         internal abstract StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input);
 
-        public StackBlockSpecBase(int index, BlockSpecTypes blockType)
+        protected StackBlockSpecBase(int index, BlockSpecTypes blockType)
             : this("Block " + index, index, blockType)
         {
         }
-        public StackBlockSpecBase(string tag, int index, BlockSpecTypes blockType)
+        protected StackBlockSpecBase(string tag, int index, BlockSpecTypes blockType)
         {
             Tag = string.IsNullOrEmpty(tag) ? "Block " + index : tag;
             Index = index;

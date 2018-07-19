@@ -10,7 +10,7 @@ namespace DomainObjects.Operations
     internal class QueryBlock<TInput, TState, TOperationEvent,TResult> : StackBlockBase<TInput, TState, TOperationEvent>, IQuery<TInput,TState, TOperationEvent>, ITypedQuery<TInput,TState, TOperationEvent, TResult>
         where TOperationEvent : OperationEvent
     {
-        private ResultDispatcher<TResult,TState> resultDispatcher = new ResultDispatcher<TResult,TState>();
+        private readonly ResultDispatcher<TResult,TState> resultDispatcher = new ResultDispatcher<TResult,TState>();
                 protected QueryBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents)
             : base(tag, stackInput, state, stackEvents)
         {

@@ -4,12 +4,4 @@
     {
         T Result { get; set; }
     }
-
-  
-
-   
-
-
-
-
 }

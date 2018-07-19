@@ -13,12 +13,4 @@ namespace DomainObjects.Operations
         void Append(IEnumerable<TOperationEvent> events);
         bool HasUnhandledErrors { get; }
     }
-
-  
-
-   
-
-
-
-
 }

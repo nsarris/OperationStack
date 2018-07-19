@@ -11,7 +11,7 @@ namespace DomainObjects.Operations
             where TOperationEvent : OperationEvent
             where TEvent : TOperationEvent
     {
-        IEnumerable<TEvent> events;
+        readonly IEnumerable<TEvent> events;
         private EventsHandler(string tag,TInput stackInput, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<TEvent, bool> filter = null)
             : base(tag, stackInput, state, input, stackEvents)
         {

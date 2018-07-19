@@ -9,7 +9,7 @@ namespace DomainObjects.Operations
     internal class StackBlocks<TInput, TState, TOperationEvent> //: List<StackBlockSpecBase<TInput,TState, TOperationEvent>>
         where TOperationEvent : OperationEvent
     {
-        private List<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks = new List<StackBlockSpecBase<TInput, TState, TOperationEvent>>();
+        private readonly List<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks = new List<StackBlockSpecBase<TInput, TState, TOperationEvent>>();
         private Dictionary<string, StackBlockSpecBase<TInput, TState, TOperationEvent>> blockDictionaryByTag;
 
         public StackBlocks()
@@ -82,7 +82,7 @@ namespace DomainObjects.Operations
             if (currentIndex == blocks.Count - 1)
                 return null;
             else
-                return blocks.Where(x => x.BlockType == BlockSpecTypes.Finally).FirstOrDefault();
+                return blocks.FirstOrDefault(x => x.BlockType == BlockSpecTypes.Finally);
         }
 
         private bool ContainsFinallyBlock() => blocks.Any(x => x.BlockType == BlockSpecTypes.Finally);

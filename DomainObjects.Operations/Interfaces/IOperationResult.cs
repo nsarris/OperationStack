@@ -38,24 +38,6 @@ namespace DomainObjects.Operations
 
     }
 
-    //public interface IOperationResult<TState, TOperationEvent> : IOperationResult<TOperationEvent>
-    //    where TOperationEvent : OperationEvent
-    //{
-    //    new TState StackState { get; }
-    //}
-
-    //public interface ICommandResult<TState, TOperationEvent> : ICommandResult, ICommandResult<TOperationEvent>, IOperationResult<TState, TOperationEvent>
-    //    where TOperationEvent : OperationEvent
-    //{
-
-    //}
-
-    //public interface IQueryResult<TState, TOperationEvent, T> : IQueryResult<T>, IQueryResult<TOperationEvent, T>, IOperationResult<TState, TOperationEvent>
-    //    where TOperationEvent : OperationEvent
-    //{
-
-    //}
-
     public interface IOperationResult<TInput, TState, TOperationEvent> : IOperationResult<TOperationEvent>
         where TOperationEvent : OperationEvent
     {
@@ -63,13 +45,13 @@ namespace DomainObjects.Operations
         new TInput StackInput { get; }
     }
 
-    public interface ICommandResult<TInput, TState, TOperationEvent> : ICommandResult, ICommandResult<TOperationEvent>, IOperationResult<TInput, TState, TOperationEvent>
+    public interface ICommandResult<TInput, TState, TOperationEvent> : ICommandResult<TOperationEvent>, IOperationResult<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
 
     }
 
-    public interface IQueryResult<TInput, TState, TOperationEvent, T> : IQueryResult<T>, IQueryResult<TOperationEvent, T>, IOperationResult<TInput, TState, TOperationEvent>
+    public interface IQueryResult<TInput, TState, TOperationEvent, T> : IQueryResult<TOperationEvent, T>, IOperationResult<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
 

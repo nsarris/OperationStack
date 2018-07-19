@@ -21,7 +21,7 @@ namespace DomainObjects.Operations
 
         internal BlockResultTarget Target { get; set; }
         internal ExecutionTime ExecutionTime { get; set; }
-        internal Emptyable<T> Result { get; private set; } = new Emptyable<T>();
+        internal Emptyable<T> Result { get; private set; }
 
         BlockResultTarget IBlockResult.Target => Target;
 

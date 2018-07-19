@@ -6,7 +6,7 @@ namespace DomainObjects.Operations
     internal class CommandBlock<TInput, TState, TOperationEvent> : StackBlockBase<TInput, TState, TOperationEvent>, ICommand<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        private ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();
+        private readonly ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();
 
         protected CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
             : base(tag, input, state, stackEvents)

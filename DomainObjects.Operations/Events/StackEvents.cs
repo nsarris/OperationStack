@@ -10,7 +10,7 @@ namespace DomainObjects.Operations
     public class StackEvents<TOperationEvent> : IStackEvents<TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        List<TOperationEvent> events = new List<TOperationEvent>();
+        private readonly List<TOperationEvent> events = new List<TOperationEvent>();
         public StackEvents()
         {
 

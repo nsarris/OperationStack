@@ -29,7 +29,7 @@ namespace OperationStackTests
 
             Assert.AreEqual(2, os.StackTrace.Count);
             Assert.AreEqual(42, os.Result.Value);
-            Assert.AreEqual(os.Events.ToList().Count, 0);
+            Assert.AreEqual(0, os.Events.ToList().Count);
             Assert.IsTrue(os.Success);
         }
 

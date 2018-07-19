@@ -9,7 +9,7 @@ namespace DomainObjects.Operations
     internal class StackBlockSpecEvent<TStackInput, TState, TOperationEvent> : StackBlockSpecBase<TStackInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder;
+        readonly Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder;
 
         public override Type InputType => null;
 
@@ -28,7 +28,7 @@ namespace DomainObjects.Operations
     internal class StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput> : StackBlockSpecBase<TStackInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder;
+        readonly Func<TStackInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TStackInput, TState, TOperationEvent>> blockBuilder;
 
         public override Type InputType => typeof(TBlockInput);
 

@@ -8,7 +8,7 @@ namespace DomainObjects.Operations
 {
     public class QueryResultProxy<T, TState> : IQueryResultProxy<T,TState>
     {
-        private ResultDispatcher<T,TState> resultDispatcher = new ResultDispatcher<T,TState>();
+        private readonly ResultDispatcher<T,TState> resultDispatcher = new ResultDispatcher<T,TState>();
         public T Result { get; set; }
 
         public BlockResult<T> Fail()

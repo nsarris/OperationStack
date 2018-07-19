@@ -1,6 +1,6 @@
 ﻿namespace DomainObjects.Operations
 {
-    public interface IResultDispatcher<T, TState>
+    public interface IResultDispatcher<T,TState>
     {
         //BlockResult<T> Return();
         BlockResult<T> Return(T result);

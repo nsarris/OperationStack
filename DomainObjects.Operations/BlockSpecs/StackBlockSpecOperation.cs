@@ -7,7 +7,7 @@ namespace DomainObjects.Operations
     internal class StackBlockSpecOperation<TInput, TState, TOperationEvent> : StackBlockSpecBase<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
+        readonly Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
 
         public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
             : base(tag, index, blockType)
@@ -26,7 +26,7 @@ namespace DomainObjects.Operations
     internal class StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin> : StackBlockSpecBase<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
+        readonly Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
 
         public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
             : base(tag, index, blockType)

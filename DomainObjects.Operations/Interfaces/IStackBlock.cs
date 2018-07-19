@@ -19,7 +19,6 @@ namespace DomainObjects.Operations
     public interface IStackBlock<TInput, TState, TOperationEvent> : IStackBlock<TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        //bool PreviousBlockSuccess { get; }
         TState StackState { get; set; }
         TInput StackInput { get; }
     }
@@ -150,12 +149,4 @@ namespace DomainObjects.Operations
     {
         IEnumerable<IOperationExceptionError<TError, TException>> ExceptionErrors { get; }
     }
-
-  
-
-   
-
-
-
-
 }

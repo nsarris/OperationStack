@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class OperationEvents<TOperationEvent> : IEnumerable<TOperationEvent>, IOperationEvents<TOperationEvent>
+    public class OperationEvents<TOperationEvent> : IOperationEvents<TOperationEvent>
         where TOperationEvent :OperationEvent
     {
-        List<TOperationEvent> events = new List<TOperationEvent>();
+        readonly List<TOperationEvent> events = new List<TOperationEvent>();
 
         public OperationEvents()
         {

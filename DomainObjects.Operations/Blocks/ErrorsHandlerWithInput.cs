@@ -8,7 +8,7 @@ namespace DomainObjects.Operations
             where TOperationEvent : OperationEvent
             where TError : TOperationEvent
     {
-        IEnumerable<TError> errors;
+        readonly IEnumerable<TError> errors;
         private ErrorsHandler(string tag, TInput stackInput, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<TError, bool> filter = null, bool? handled = null, bool handle = false)
             : base(tag, stackInput, state, input, stackEvents)
         {

@@ -140,7 +140,7 @@ namespace DomainObjects.Operations
             where TError : TOperationEvent
         {
             return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
+                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));
         }
 
         public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildExceptionHandler<TError, TException, TBlockInput>(int index, Func<IExceptionsErrorHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TBlockInput>> func, Func<IOperationExceptionError<TError, TException>, bool> filter = null)
@@ -148,7 +148,7 @@ namespace DomainObjects.Operations
             where TError : TOperationEvent
         {
             return new StackBlockSpecEvent<TStackInput, TState, TOperationEvent, TBlockInput>(index, (TStackInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));//, BlockSpecTypes.UnhandledExceptionHandler);
+                => new ExceptionsHandler<TError, TException, TStackInput, TState, TOperationEvent, TBlockInput>("", stackInput, state, input.ConvertTo<TBlockInput>(), stackEvents, func, filter));
         }
 
         public static StackBlockSpecBase<TStackInput, TState, TOperationEvent> BuildFinally<TBlockInput, TResult>(int index, Func<IQuery<TStackInput, TState, TOperationEvent, TBlockInput>, BlockResult<TResult>> func)

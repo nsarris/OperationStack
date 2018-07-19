@@ -3,7 +3,7 @@
     internal class EventHandlerBlockBase<TInput, TState, TOperationEvent, Tin> : StackBlockBase<TInput, TState, TOperationEvent>, IStackBlock<TInput,TState, TOperationEvent, Tin>, IResultDispatcher<Tin, TState>
         where TOperationEvent : OperationEvent
     {
-        ResultDispatcher<Tin,TState> resultDispather = new ResultDispatcher<Tin,TState>();
+        readonly ResultDispatcher<Tin,TState> resultDispather = new ResultDispatcher<Tin,TState>();
         internal EventHandlerBlockBase(string tag, TInput stackInput, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents) 
             : base(tag, stackInput, state, stackEvents)
         {

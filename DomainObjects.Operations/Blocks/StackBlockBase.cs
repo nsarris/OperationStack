@@ -16,10 +16,12 @@ namespace DomainObjects.Operations
         public IEnumerable<TOperationEvent> FlattenedEvents => Events.Concat(innerStackTrace.SelectMany(x => x.FlattenedEvents));
         public bool IsEmptyEventBlock { get; protected set; }
         public bool IsAsync => executorAsync != null;
-        List<BlockTraceResult<TOperationEvent>> innerStackTrace = new List<BlockTraceResult<TOperationEvent>>();
         public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace => innerStackTrace.AsEnumerable();
         internal virtual IEmptyable Input { get; set; } = Emptyable.Empty;
-        public StackBlockBase(string tag, IStackEvents<TOperationEvent> stackEvents)
+
+        readonly List<BlockTraceResult<TOperationEvent>> innerStackTrace = new List<BlockTraceResult<TOperationEvent>>();
+
+        protected StackBlockBase(string tag, IStackEvents<TOperationEvent> stackEvents)
         {
             Tag = tag;
             StackEvents = stackEvents;
@@ -128,7 +130,7 @@ namespace DomainObjects.Operations
                 if (measureTime)
                 {
                     sw.Stop();
-                    ((IBlockResult)result).ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                    result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
                 }
                 return result;
             }
@@ -153,7 +155,7 @@ namespace DomainObjects.Operations
     internal abstract class StackBlockBase<TInput, TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        public StackBlockBase(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
+        protected StackBlockBase(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
             : base(tag, stackEvents)
         {
             StackState = state;

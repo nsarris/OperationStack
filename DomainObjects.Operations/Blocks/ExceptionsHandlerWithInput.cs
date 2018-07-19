@@ -9,7 +9,7 @@ namespace DomainObjects.Operations
             where TOperationEvent : OperationEvent
             where TEvent : TOperationEvent
     {
-        IEnumerable<IOperationExceptionError<TEvent, TException>> errors;
+        readonly IEnumerable<IOperationExceptionError<TEvent, TException>> errors;
         public ExceptionsHandler(string tag, TInput stackInput, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null, bool? handled = null, bool handle = false)
             : base(tag, stackInput, state, input, stackEvents)
         {
