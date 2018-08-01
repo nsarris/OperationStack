@@ -26,7 +26,7 @@ namespace DomainObjects.Operations
             : base(tag, stackInput, state, stackEvents)
         {
             Input = input;
-            executor = () => { var r = func(this); this.Append(r); return ((IResultDispatcher<TResult>)this).Return(r.Result.Value); };
+            executor = () => { var r = func(this); this.Append(r); return ((IResultDispatcher<TResult, TOperationEvent>)this).Return(r.Result.Value); };
         }
 
         internal QueryBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, Func<IQuery<TInput,TState, TOperationEvent, Tin>, Task<BlockResult<TResult>>> func)
@@ -47,7 +47,7 @@ namespace DomainObjects.Operations
             : base(tag, stackInput, state, stackEvents)
         {
             Input = input;
-            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return ((IResultDispatcher<TResult>)this).Return(r.Result.Value); };
+            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return ((IResultDispatcher<TResult, TOperationEvent>)this).Return(r.Result.Value); };
         }
 
         internal QueryBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, IQueryOperation<TOperationEvent, TResult> queryOperation)
@@ -66,7 +66,7 @@ namespace DomainObjects.Operations
                         r = queryOperation.Execute();
 
                     this.Append(r);
-                    return ((IResultDispatcher<TResult>)this).Return(r.Result.Value);
+                    return ((IResultDispatcher<TResult, TOperationEvent>)this).Return(r.Result.Value);
                 };
             else
                 executorAsync = async () => {
@@ -81,7 +81,7 @@ namespace DomainObjects.Operations
                         r = await queryOperation.ExecuteAsync().ConfigureAwait(false);
 
                     this.Append(r);
-                    return ((IResultDispatcher<TResult>)this).Return(r.Result.Value);
+                    return ((IResultDispatcher<TResult, TOperationEvent>)this).Return(r.Result.Value);
                 };
         }
     }

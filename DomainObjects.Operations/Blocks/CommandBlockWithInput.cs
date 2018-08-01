@@ -19,14 +19,14 @@ namespace DomainObjects.Operations
             : base(tag, stackInput, state, stackEvents)
         {
             Input = input;
-            executor = () => { action(this); return ((IResultVoidDispatcher<TState>)this).Return(); };
+            executor = () => { action(this); return ((IResultVoidDispatcher<TState, TOperationEvent>)this).Return(); };
         }
 
         internal CommandBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, Func<IOperationBlock<TInput,TState, TOperationEvent,Tin>, ICommandResult<TOperationEvent>> func)
             : base(tag, stackInput, state, stackEvents)
         {
             Input = input;
-            executor = () => { var r = func(this); this.Append(r); return ((IResultVoidDispatcher<TState>)this).Return(); };
+            executor = () => { var r = func(this); this.Append(r); return ((IResultVoidDispatcher<TState, TOperationEvent>)this).Return(); };
         }
 
 
@@ -41,14 +41,14 @@ namespace DomainObjects.Operations
             : base(tag, stackInput, state, stackEvents)
         {
             Input = input;
-            executorAsync = async () => { await action(this).ConfigureAwait(false); return ((IResultVoidDispatcher<TState>)this).Return(); };
+            executorAsync = async () => { await action(this).ConfigureAwait(false); return ((IResultVoidDispatcher<TState, TOperationEvent>)this).Return(); };
         }
 
         internal CommandBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, Func<IOperationBlock<TInput,TState, TOperationEvent,Tin>, Task<ICommandResult<TOperationEvent>>> func)
             : base(tag, stackInput, state, stackEvents)
         {
             Input = input;
-            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return ((IResultVoidDispatcher<TState>)this).Return(); };
+            executorAsync = async () => { var r = await func(this).ConfigureAwait(false); this.Append(r); return ((IResultVoidDispatcher<TState, TOperationEvent>)this).Return(); };
         }
 
         internal CommandBlock(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Emptyable<Tin> input, ICommandOperation<TOperationEvent> commandOperation)
@@ -67,7 +67,7 @@ namespace DomainObjects.Operations
                         r = commandOperation.Execute();
 
                     this.Append(r);
-                    return ((IResultVoidDispatcher<TState>)this).Return();
+                    return ((IResultVoidDispatcher<TState, TOperationEvent>)this).Return();
                 };
             else
                 executorAsync = async () => {
@@ -83,7 +83,7 @@ namespace DomainObjects.Operations
                         r = await commandOperation.ExecuteAsync().ConfigureAwait(false);
 
                     this.Append(r);
-                    return ((IResultVoidDispatcher<TState>)this).Return();
+                    return ((IResultVoidDispatcher<TState, TOperationEvent>)this).Return();
                 };
         }
     }

@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class QueryResultProxy<T, TState> : IQueryResultProxy<T,TState>
+    public class QueryResultProxy<T, TState, TOperationEvent> : IQueryResultProxy<T,TState, TOperationEvent>
+        where TOperationEvent : OperationEvent
     {
-        private readonly ResultDispatcher<T,TState> resultDispatcher = new ResultDispatcher<T,TState>();
+        private readonly ResultDispatcher<T,TState, TOperationEvent> resultDispatcher = new ResultDispatcher<T,TState, TOperationEvent>();
         public T Result { get; set; }
 
         public BlockResult<T> Fail()
@@ -94,7 +95,7 @@ namespace DomainObjects.Operations
             return resultDispatcher.Return(Result);
         }
 
-        public BlockResult<T> Fail(OperationEvent error)
+        public BlockResult<T> Fail(TOperationEvent error)
         {
             return resultDispatcher.Fail(error);
         }

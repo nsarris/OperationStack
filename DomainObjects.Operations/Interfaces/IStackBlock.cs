@@ -42,15 +42,15 @@ namespace DomainObjects.Operations
 
     }
 
-    public interface IQuery<TInput, TState, TOperationEvent> : IOperationBlock<TInput, TState, TOperationEvent>, IResultDispatcher<TState>
+    public interface IQuery<TInput, TState, TOperationEvent> : IOperationBlock<TInput, TState, TOperationEvent>, IResultDispatcher<TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        IQueryResultProxy<T,TState> DefineResult<T>();
-        IQueryResultProxy<T, TState> DefineResult<T>(T result);
-        IQueryResultProxy<T, TState> DefineResult<T>(Expression<Func<T>> expression);
+        IQueryResultProxy<T,TState, TOperationEvent> DefineResult<T>();
+        IQueryResultProxy<T, TState, TOperationEvent> DefineResult<T>(T result);
+        IQueryResultProxy<T, TState, TOperationEvent> DefineResult<T>(Expression<Func<T>> expression);
     }
 
-    public interface ICommand<TInput, TState, TOperationEvent> : IOperationBlock<TInput, TState, TOperationEvent>, IResultVoidDispatcher<TState>
+    public interface ICommand<TInput, TState, TOperationEvent> : IOperationBlock<TInput, TState, TOperationEvent>, IResultVoidDispatcher<TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
 
@@ -76,7 +76,7 @@ namespace DomainObjects.Operations
 
 
 
-    public interface ITypedQuery<TInput, TState, TOperationEvent, T> : IOperationBlock<TInput, TState, TOperationEvent>, IResultDispatcher<TState>, IResultDispatcher<T,TState>
+    public interface ITypedQuery<TInput, TState, TOperationEvent, T> : IOperationBlock<TInput, TState, TOperationEvent>, IResultDispatcher<TState, TOperationEvent>, IResultDispatcher<T,TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
 
@@ -90,13 +90,13 @@ namespace DomainObjects.Operations
 
 
 
-    public interface IEventHandler<TInput, TState, TOperationEvent> : IStackBlock<TInput, TState, TOperationEvent>, IResultVoidDispatcher<TState>
+    public interface IEventHandler<TInput, TState, TOperationEvent> : IStackBlock<TInput, TState, TOperationEvent>, IResultVoidDispatcher<TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
 
     }
 
-    public interface IEventHandlerWithInput<TInput, TState, TOperationEvent, T> : IStackBlock<TInput, TState, TOperationEvent, T>, IResultDispatcher<T,TState>
+    public interface IEventHandlerWithInput<TInput, TState, TOperationEvent, T> : IStackBlock<TInput, TState, TOperationEvent, T>, IResultDispatcher<T,TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
         Emptyable<T> Result { get; }

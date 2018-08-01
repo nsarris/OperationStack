@@ -6,7 +6,7 @@ namespace DomainObjects.Operations
     internal class CommandBlock<TInput, TState, TOperationEvent> : StackBlockBase<TInput, TState, TOperationEvent>, ICommand<TInput, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        private readonly ResultVoidDispatcher<TState> resultDispatcher = new ResultVoidDispatcher<TState>();
+        private readonly ResultVoidDispatcher<TState, TOperationEvent> resultDispatcher = new ResultVoidDispatcher<TState, TOperationEvent>();
 
         protected CommandBlock(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
             : base(tag, input, state, stackEvents)
@@ -89,96 +89,96 @@ namespace DomainObjects.Operations
         //        executorAsync = async () => { var r = await commandOperation.ExecuteAsync(state).ConfigureAwait(false); this.Append(r); this.StackState = (TState)r.StackState; return resultDispatcher.Return(); };
         //}
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Fail()
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Fail()
         {
             return resultDispatcher.Fail();
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Fail(OperationEvent error)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Fail(TOperationEvent error)
         {
             return resultDispatcher.Fail(error);
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Complete()
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Complete()
         {
             return resultDispatcher.Complete();
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Complete(object overrideResult)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Complete(object overrideResult)
         {
             return resultDispatcher.Complete(overrideResult);
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Reset()
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Reset()
         {
             return resultDispatcher.Reset();
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Reset(TState state)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Reset(TState state)
         {
             return resultDispatcher.Reset(state);
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Restart()
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Restart()
         {
             return resultDispatcher.Restart();
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Return()
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Return()
         {
             return resultDispatcher.Return();
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Goto(string tag)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Goto(string tag)
         {
             return resultDispatcher.Goto(tag);
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Goto(string tag, object overrideInput)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Goto(string tag, object overrideInput)
         {
             return resultDispatcher.Goto(tag, overrideInput);
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Goto(int index)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Goto(int index)
         {
             return resultDispatcher.Goto(index);
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Goto(int index, object overrideInput)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Goto(int index, object overrideInput)
         {
             return resultDispatcher.Goto(index, overrideInput);
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Skip(int i)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Skip(int i)
         {
             return resultDispatcher.Skip(i);
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Skip(int i, object overrideInput)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Skip(int i, object overrideInput)
         {
             return resultDispatcher.Skip(i, overrideInput);
         }
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Retry()
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Retry()
         {
             return resultDispatcher.Retry();
         }
 
 
 
-        BlockResultVoid IResultVoidDispatcher<TState>.Retry(object overrideInput)
+        BlockResultVoid IResultVoidDispatcher<TState, TOperationEvent>.Retry(object overrideInput)
         {
             return resultDispatcher.Retry(overrideInput);
         }

@@ -1,9 +1,9 @@
 ﻿namespace DomainObjects.Operations
 {
-    internal class EventHandlerBlockBase<TInput, TState, TOperationEvent, Tin> : StackBlockBase<TInput, TState, TOperationEvent>, IStackBlock<TInput,TState, TOperationEvent, Tin>, IResultDispatcher<Tin, TState>
+    internal class EventHandlerBlockBase<TInput, TState, TOperationEvent, Tin> : StackBlockBase<TInput, TState, TOperationEvent>, IStackBlock<TInput,TState, TOperationEvent, Tin>, IResultDispatcher<Tin, TState, TOperationEvent>
         where TOperationEvent : OperationEvent
     {
-        readonly ResultDispatcher<Tin,TState> resultDispather = new ResultDispatcher<Tin,TState>();
+        readonly ResultDispatcher<Tin,TState,TOperationEvent> resultDispather = new ResultDispatcher<Tin,TState, TOperationEvent>();
         internal EventHandlerBlockBase(string tag, TInput stackInput, TState state, Emptyable<Tin> input, IStackEvents<TOperationEvent> stackEvents) 
             : base(tag, stackInput, state, stackEvents)
         {
@@ -17,7 +17,7 @@
             return resultDispather.Fail();
         }
 
-        public BlockResult<Tin> Fail(OperationEvent error)
+        public BlockResult<Tin> Fail(TOperationEvent error)
         {
             return resultDispather.Fail(error);
         }
@@ -97,7 +97,7 @@
             return resultDispather.Retry(overrideInput);
         }
 
-        BlockResult<Tin> IResultDispatcher<Tin, TState>.Retry(object overrideInput)
+        BlockResult<Tin> IResultDispatcher<Tin, TState, TOperationEvent>.Retry(object overrideInput)
         {
             return resultDispather.Retry(overrideInput);
         }

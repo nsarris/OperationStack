@@ -131,7 +131,7 @@ namespace OperationStackTests
                 })
                 .Then(op =>
                 {
-                    var oe = new OperationEvent("Test event");
+                    //var oe = new OperationEvent("Test event");
                     //op.Throw(oe);
                 })
                 .OnEvents(h =>

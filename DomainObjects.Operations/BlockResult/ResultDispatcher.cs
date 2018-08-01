@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal class ResultDispatcher<T, TState> : IResultDispatcher<T, TState>
+    internal class ResultDispatcher<T, TState, TOperationEvent> : IResultDispatcher<T, TState, TOperationEvent>
+        where TOperationEvent : OperationEvent
     {
         public BlockResult<T> Fail()
         {
@@ -189,7 +190,7 @@ namespace DomainObjects.Operations
             };
         }
 
-        public BlockResult<T> Fail(OperationEvent error)
+        public BlockResult<T> Fail(TOperationEvent error)
         {
             return new BlockResult<T>
             {
