@@ -48,6 +48,7 @@
     <Compile Include="BlockResult\BlockResultTarget.cs" />
     <Compile Include="BlockResult\BlockResultVoid.cs" />
     <Compile Include="Events\ExceptionErrorBuilder.cs" />
+    <Compile Include="Infrastructure\Void.cs" />
     <Compile Include="Interfaces\IBlockResult.cs" />
     <Compile Include="BlockResult\ResultVoidDispatcher.cs" />
     <Compile Include="Blocks\CommandBlock.cs" />

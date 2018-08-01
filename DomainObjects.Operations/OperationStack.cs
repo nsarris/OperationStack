@@ -7,34 +7,6 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public interface IVoid
-    {
-
-    }
-
-    public sealed class Void : IVoid
-    {
-
-    }
-
-    public class OperationStack<TInput, TOutput> : OperationStack<TInput, object, OperationEvent, TOutput>
-    {
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, object, OperationEvent>> blocks, OperationStackOptions options, Func<object> initalStateBuilder, bool hasInput) : base(blocks, options, initalStateBuilder, hasInput)
-        {
-        }
-    }
-
-    public class OperationStack<TInput, TState, TOperationEvent> : OperationStack<TInput, TState, TOperationEvent, IVoid>
-        where TOperationEvent : OperationEvent
-    {
-        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initalStateBuilder, bool hasInput) 
-            : base(blocks, options, initalStateBuilder, hasInput)
-        {
-        }
-    }
-
-
-
     public partial class OperationStack<TInput, TState, TOperationEvent, TOutput> : IQueryOperation<TInput, TState, TOperationEvent, TOutput>
         where TOperationEvent : OperationEvent
     {
@@ -47,18 +19,8 @@ namespace DomainObjects.Operations
         public int NextIndex => internalStack.NextIndex;
 
         private readonly OperationStackInternal<TInput, TState, TOperationEvent> internalStack;
-        
+
         #endregion Fields and Props
-
-        public OperationStack<TInput, TState, TOperationEvent, IVoid> CreateNew(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
-        {
-            return internalStack.CreateNew(block);
-        }
-
-        public OperationStack<TInput, TState, TOperationEvent, TNewOutput> CreateNew<TNewOutput>(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
-        {
-            return internalStack.CreateNew<TNewOutput>(block);
-        }
 
         #region Ctor
 
@@ -68,6 +30,19 @@ namespace DomainObjects.Operations
         }
 
         #endregion Ctor
+
+        #region Block Builder
+        private OperationStack<TInput, TState, TOperationEvent, IVoid> CreateNew(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
+        {
+            return internalStack.CreateNew(block);
+        }
+
+        private OperationStack<TInput, TState, TOperationEvent, TNewOutput> CreateNew<TNewOutput>(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
+        {
+            return internalStack.CreateNew<TNewOutput>(block);
+        }
+
+        #endregion
 
         #region OnEvents / Catch
 
@@ -662,4 +637,23 @@ namespace DomainObjects.Operations
 
         #endregion Result
     }
+
+    public class OperationStack<TInput, TState, TOperationEvent> : OperationStack<TInput, TState, TOperationEvent, IVoid>
+    where TOperationEvent : OperationEvent
+    {
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks, OperationStackOptions options, Func<TState> initalStateBuilder, bool hasInput)
+            : base(blocks, options, initalStateBuilder, hasInput)
+        {
+        }
+    }
+
+    public class OperationStack<TInput, TOutput> : OperationStack<TInput, object, OperationEvent, TOutput>
+    {
+        internal OperationStack(IEnumerable<StackBlockSpecBase<TInput, object, OperationEvent>> blocks, OperationStackOptions options, Func<object> initalStateBuilder, bool hasInput) 
+            : base(blocks, options, initalStateBuilder, hasInput)
+        {
+        }
+    }
+
+
 }

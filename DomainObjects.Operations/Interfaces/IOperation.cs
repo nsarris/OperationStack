@@ -58,9 +58,6 @@ namespace DomainObjects.Operations
             IQueryResult<TInput, TState, TOperationEvent, TResult> Execute(TInput input, TState initialState);
             Task<IQueryResult<TInput, TState, TOperationEvent, TResult>> ExecuteAsync(TInput input, TState initialState);
 
-            OperationStack<TInput, TState, TOperationEvent, IVoid> CreateNew(StackBlockSpecBase<TInput, TState, TOperationEvent> block);
-            OperationStack<TInput, TState, TOperationEvent, TOutput> CreateNew<TOutput>(StackBlockSpecBase<TInput, TState, TOperationEvent> block);
-
             int NextIndex { get; }
         }
 
