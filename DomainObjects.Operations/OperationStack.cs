@@ -16,7 +16,7 @@ namespace DomainObjects.Operations
         bool IOperation.SupportsSync => internalStack.Options.SupportsSync;
         bool IOperation.SupportsAsync => internalStack.Options.SupportsAsync;
         bool IOperation.PreferAsync => internalStack.Options.PreferAsync;
-        public int NextIndex => internalStack.NextIndex;
+        private int NextIndex => internalStack.NextIndex;
 
         private readonly OperationStackInternal<TInput, TState, TOperationEvent> internalStack;
 

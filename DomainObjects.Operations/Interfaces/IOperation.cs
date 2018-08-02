@@ -57,8 +57,6 @@ namespace DomainObjects.Operations
         {
             IQueryResult<TInput, TState, TOperationEvent, TResult> Execute(TInput input, TState initialState);
             Task<IQueryResult<TInput, TState, TOperationEvent, TResult>> ExecuteAsync(TInput input, TState initialState);
-
-            int NextIndex { get; }
         }
 
         public interface ICommandOperation<TInput, TState, TOperationEvent> : ICommandOperationWithInput<TInput, TOperationEvent>, ICommandOperationWithState<TState, TOperationEvent>
