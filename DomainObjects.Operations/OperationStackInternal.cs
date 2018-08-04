@@ -22,8 +22,8 @@ namespace DomainObjects.Operations
         }
         public bool HasInput { get; private set; }
         public bool HasState => InitialStateBuilder != null;
-        public OperationStackOptions Options { get;private  set; } = new OperationStackOptions();
-        public Func<TState> InitialStateBuilder { get; private set; } = () => default(TState);
+        public OperationStackOptions Options { get;private  set; }
+        public Func<TState> InitialStateBuilder { get; private set; }
         public StackBlocks<TInput, TState, TOperationEvent> Blocks { get; private set; } = new StackBlocks<TInput, TState, TOperationEvent>();
         public int NextIndex => Blocks.Count;
 
@@ -42,7 +42,7 @@ namespace DomainObjects.Operations
         public void AssertInput()
         {
             if (HasInput)
-                throw new Exception("OperationStack as declared with Input of type " + typeof(TInput).Name + ". Please use an overload of Execute with input parameter.");
+                throw new InvalidOperationException("OperationStack as declared with Input of type " + typeof(TInput).Name + ". Please use an overload of Execute with input parameter.");
         }
 
 

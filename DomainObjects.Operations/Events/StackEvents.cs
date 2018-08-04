@@ -29,19 +29,19 @@ namespace DomainObjects.Operations
         public IEnumerable<TEvent> Filter<TEvent>(Func<TEvent, bool> filter = null) 
             where TEvent : TOperationEvent
         {
-            var events = this.OfType<TEvent>();
+            var filteredEvents = this.OfType<TEvent>();
             if (filter != null)
-                events = events.Where(filter);
-            return events;
+                filteredEvents = filteredEvents.Where(filter);
+            return filteredEvents;
         }
 
         public IEnumerable<TEvent> FilterErrors<TEvent>(bool? handled, Func<TEvent, bool> filter = null)
             where TEvent : TOperationEvent
         {
-            var events = this.OfType<TEvent>().Where(x => !x.IsSwallowed && (handled == null || x.IsHandled == handled));
+            var filteredEvents = this.OfType<TEvent>().Where(x => !x.IsSwallowed && (handled == null || x.IsHandled == handled));
             if (filter != null)
-                events = events.Where(filter);
-            var r =  events.ToList();
+                filteredEvents = filteredEvents.Where(filter);
+            var r =  filteredEvents.ToList();
             
             return r;
         }
@@ -50,12 +50,12 @@ namespace DomainObjects.Operations
             where TException : Exception 
             where TEvent : TOperationEvent
         {
-            var events = this.OfType<TEvent>()
+            var filteredEvents = this.OfType<TEvent>()
                 .Where(x => x.Exception is TException && !x.IsSwallowed && (handled == null || x.IsHandled == handled))
                 .Select(x => new OperationExceptionError<TEvent,TException>(x, x.Exception as TException) as IOperationExceptionError<TEvent,TException>);
             if (filter != null)
-                events = events.Where(filter);
-            var r = events.ToList();
+                filteredEvents = filteredEvents.Where(filter);
+            var r = filteredEvents.ToList();
             
             return r;
         }
