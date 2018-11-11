@@ -8,6 +8,7 @@ namespace DomainObjects.Operations
         object StackState { get; }
         object StackInput { get; }
         IEnumerable<OperationEvent> Events { get; }
+        IReadOnlyList<BlockTraceResult> StackTrace { get; }
     }
 
     public interface ICommandResult : IOperationResult
@@ -19,40 +20,19 @@ namespace DomainObjects.Operations
         Emptyable<T> Result { get; }
     }
 
-    public interface IOperationResult<TOperationEvent> : IOperationResult
-        where TOperationEvent : OperationEvent
-    {
-        new IEnumerable<TOperationEvent> Events { get; }
-        IReadOnlyList<BlockTraceResult<TOperationEvent>> StackTrace { get; }
-    }
-
-    public interface ICommandResult<TOperationEvent> : ICommandResult, IOperationResult<TOperationEvent>
-        where TOperationEvent : OperationEvent
-    {
-
-    }
-
-    public interface IQueryResult<TOperationEvent, T> : IQueryResult<T>, IOperationResult<TOperationEvent>
-        where TOperationEvent : OperationEvent
-    {
-
-    }
-
-    public interface IOperationResult<TInput, TState, TOperationEvent> : IOperationResult<TOperationEvent>
-        where TOperationEvent : OperationEvent
+   
+    public interface IOperationResult<TInput, TState> : IOperationResult
     {
         new TState StackState { get; }
         new TInput StackInput { get; }
     }
 
-    public interface ICommandResult<TInput, TState, TOperationEvent> : ICommandResult<TOperationEvent>, IOperationResult<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface ICommandResult<TInput, TState> : ICommandResult, IOperationResult<TInput, TState>
     {
 
     }
 
-    public interface IQueryResult<TInput, TState, TOperationEvent, T> : IQueryResult<TOperationEvent, T>, IOperationResult<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IQueryResult<TInput, TState, T> : IQueryResult<T>, IOperationResult<TInput, TState>
     {
 
     }

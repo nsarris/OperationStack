@@ -2,72 +2,59 @@
 
 namespace DomainObjects.Operations
 {
-        public interface IOperation
-        {
-            bool SupportsSync { get; }
-            bool SupportsAsync { get; }
-            bool PreferAsync { get; }
-        }
+    public interface IOperation
+    {
+        bool SupportsSync { get; }
+        bool SupportsAsync { get; }
+        bool PreferAsync { get; }
+    }
 
 
-        public interface IQueryOperation<TOperationEvent, TResult> : IOperation
-            where TOperationEvent : OperationEvent
-        {
-            IQueryResult<TOperationEvent, TResult> Execute();
-            Task<IQueryResult<TOperationEvent, TResult>> ExecuteAsync();
-        }
+    public interface IQueryOperation<TResult> : IOperation
+    {
+        IQueryResult<TResult> Execute();
+        Task<IQueryResult<TResult>> ExecuteAsync();
+    }
 
-        public interface ICommandOperation<TOperationEvent> : IOperation
-            where TOperationEvent : OperationEvent
-        {
-            ICommandResult<TOperationEvent> Execute();
-            Task<ICommandResult<TOperationEvent>> ExecuteAsync();
-        }
+    public interface ICommandOperation : IOperation
+    {
+        ICommandResult Execute();
+        Task<ICommandResult> ExecuteAsync();
+    }
 
-        public interface IQueryOperationWithInput<TInput, TOperationEvent, TResult> : IQueryOperation<TOperationEvent, TResult>
-            where TOperationEvent : OperationEvent
-        {
-            IQueryResult<TOperationEvent, TResult> Execute(TInput input);
-            Task<IQueryResult<TOperationEvent, TResult>> ExecuteAsync(TInput input);
-        }
+    public interface IQueryOperationWithInput<TInput, TResult> : IQueryOperation<TResult>
+    {
+        IQueryResult<TResult> Execute(TInput input);
+        Task<IQueryResult<TResult>> ExecuteAsync(TInput input);
+    }
 
-        public interface ICommandOperationWithInput<TInput, TOperationEvent> : ICommandOperation<TOperationEvent>
-            where TOperationEvent : OperationEvent
-        {
-            ICommandResult<TOperationEvent> Execute(TInput input);
-            Task<ICommandResult<TOperationEvent>> ExecuteAsync(TInput input);
-        }
+    public interface ICommandOperationWithInput<TInput> : ICommandOperation
+    {
+        ICommandResult Execute(TInput input);
+        Task<ICommandResult> ExecuteAsync(TInput input);
+    }
 
-        public interface IQueryOperationWithState<TState, TOperationEvent, TResult> : IQueryOperation<TOperationEvent, TResult>
-            where TOperationEvent : OperationEvent
-        {
-            IQueryResult<TOperationEvent, TResult> Execute(TState initialState);
-            Task<IQueryResult<TOperationEvent, TResult>> ExecuteAsync(TState initialState);
-        }
+    public interface IQueryOperationWithState<TState, TResult> : IQueryOperation<TResult>
+    {
+        IQueryResult<TResult> Execute(TState initialState);
+        Task<IQueryResult<TResult>> ExecuteAsync(TState initialState);
+    }
 
-        public interface ICommandOperationWithState<TState, TOperationEvent> : ICommandOperation<TOperationEvent>
-            where TOperationEvent : OperationEvent
-        {
-            ICommandResult<TOperationEvent> Execute(TState initialState);
-            Task<ICommandResult<TOperationEvent>> ExecuteAsync(TState initialState);
-        }
+    public interface ICommandOperationWithState<TState> : ICommandOperation
+    {
+        ICommandResult Execute(TState initialState);
+        Task<ICommandResult> ExecuteAsync(TState initialState);
+    }
 
-        public interface IQueryOperation<TInput, TState, TOperationEvent, TResult> : IQueryOperationWithInput<TInput, TOperationEvent, TResult>, IQueryOperationWithState<TState, TOperationEvent, TResult>
-            where TOperationEvent : OperationEvent
-        {
-            IQueryResult<TInput, TState, TOperationEvent, TResult> Execute(TInput input, TState initialState);
-            Task<IQueryResult<TInput, TState, TOperationEvent, TResult>> ExecuteAsync(TInput input, TState initialState);
-        }
+    public interface IQueryOperation<TInput, TState, TResult> : IQueryOperationWithInput<TInput, TResult>, IQueryOperationWithState<TState, TResult>
+    {
+        IQueryResult<TInput, TState, TResult> Execute(TInput input, TState initialState);
+        Task<IQueryResult<TInput, TState, TResult>> ExecuteAsync(TInput input, TState initialState);
+    }
 
-        public interface ICommandOperation<TInput, TState, TOperationEvent> : ICommandOperationWithInput<TInput, TOperationEvent>, ICommandOperationWithState<TState, TOperationEvent>
-            where TOperationEvent : OperationEvent
-        {
-            ICommandResult<TInput, TState, TOperationEvent> Execute(TInput input, TState initialState);
-            Task<ICommandResult<TInput, TState, TOperationEvent>> ExecuteAsync(TInput input, TState initialState);
-        }
-
-    
-
-
-
+    public interface ICommandOperation<TInput, TState> : ICommandOperationWithInput<TInput>, ICommandOperationWithState<TState>
+    {
+        ICommandResult<TInput, TState> Execute(TInput input, TState initialState);
+        Task<ICommandResult<TInput, TState>> ExecuteAsync(TInput input, TState initialState);
+    }
 }

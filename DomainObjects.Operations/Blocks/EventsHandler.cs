@@ -6,36 +6,33 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-
-    internal class EventsHandler<TEvent, TInput, TState, TOperationEvent> : EventHandlerBlockBase<TInput, TState, TOperationEvent>, IEventsHandler<TEvent, TInput, TState, TOperationEvent>
-            where TOperationEvent : OperationEvent
-            where TEvent : TOperationEvent
+    public partial class OperationStack<TInput, TState, TOutput>
     {
-        readonly IEnumerable<TEvent> events;
-
-        private EventsHandler(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Func<TEvent, bool> filter = null)
-            : base(tag, stackInput, state, stackEvents)
+        internal class EventsHandler<TEvent> : EventHandlerBlockBase, IEventsHandler<TEvent, TInput, TState>
+                where TEvent : OperationEvent
         {
-            events = stackEvents.FilterErrors(null, filter);
-            IsEmptyEventBlock = !events.Any();
-        }
+            readonly IEnumerable<TEvent> events;
 
-        public EventsHandler(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Func<IEventsHandler<TEvent, TInput, TState, TOperationEvent>, BlockResultVoid> func, Func<TEvent, bool> filter = null)
-            : this(tag, stackInput, state, stackEvents, filter)
-        {
-            executor = () => func(this);
-        }
+            private EventsHandler(string tag, TInput stackInput, TState state, IStackEvents stackEvents, Func<TEvent, bool> filter = null)
+                : base(tag, stackInput, state, stackEvents)
+            {
+                events = stackEvents.FilterErrors(null, filter);
+                IsEmptyEventBlock = !events.Any();
+            }
 
-        public EventsHandler(string tag, TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, Action<IEventsHandler<TEvent, TInput, TState, TOperationEvent>> action, Func<TEvent, bool> filter = null)
-            : this(tag, stackInput, state, stackEvents, filter)
-        {
-            executor = () => { action(this); return Return(); };
-        }
+            public EventsHandler(string tag, TInput stackInput, TState state, IStackEvents stackEvents, Func<IEventsHandler<TEvent, TInput, TState>, BlockResultVoid> func, Func<TEvent, bool> filter = null)
+                : this(tag, stackInput, state, stackEvents, filter)
+            {
+                executor = () => func(this);
+            }
 
-        IEnumerable<TEvent> IEventsHandler<TEvent, TInput, TState, TOperationEvent>.Events => events;
+            public EventsHandler(string tag, TInput stackInput, TState state, IStackEvents stackEvents, Action<IEventsHandler<TEvent, TInput, TState>> action, Func<TEvent, bool> filter = null)
+                : this(tag, stackInput, state, stackEvents, filter)
+            {
+                executor = () => { action(this); return Return(); };
+            }
+
+            IEnumerable<TEvent> IEventsHandler<TEvent, TInput, TState>.Events => events;
+        }
     }
-
-
-
-
 }

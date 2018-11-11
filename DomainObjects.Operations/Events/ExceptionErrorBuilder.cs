@@ -7,34 +7,33 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public static class ExceptionErrorBuilder<TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public static class ExceptionErrorBuilder
     {
-        private static Lazy<Func<Exception, TOperationEvent>> builder;
+        private static Lazy<Func<Exception, OperationEvent>> builder;
 
-        public static TOperationEvent Build(Exception e)
+        public static OperationEvent Build(Exception e)
         {
             return builder.Value(e);
         }
 
         static ExceptionErrorBuilder()
         {
-            builder = new Lazy<Func<Exception, TOperationEvent>>(() =>
+            builder = new Lazy<Func<Exception, OperationEvent>>(() =>
             {
-                var ctor = typeof(TOperationEvent).GetConstructor(new Type[] { typeof(Exception) });
+                var ctor = typeof(OperationEvent).GetConstructor(new Type[] { typeof(Exception) });
 
                 if (ctor != null)
                 {
                     var param1 = Expression.Parameter(typeof(Exception));
-                    var l = Expression.Lambda<Func<Exception, TOperationEvent>>(Expression.New(ctor, param1), param1);
+                    var l = Expression.Lambda<Func<Exception, OperationEvent>>(Expression.New(ctor, param1), param1);
                     return l.Compile();
                 }
                 else
                 {
-                    ctor = typeof(TOperationEvent).GetConstructor(new Type[] { });
-                    var l = Expression.Lambda<Func<TOperationEvent>>(Expression.New(ctor));
+                    ctor = typeof(OperationEvent).GetConstructor(new Type[] { });
+                    var l = Expression.Lambda<Func<OperationEvent>>(Expression.New(ctor));
                     var f = l.Compile();
-                    TOperationEvent r(Exception e)
+                    OperationEvent r(Exception e)
                     {
                         var o = f();
                         o.FromException(e);

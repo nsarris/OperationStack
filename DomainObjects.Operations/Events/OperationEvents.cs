@@ -7,43 +7,42 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class OperationEvents<TOperationEvent> : IOperationEvents<TOperationEvent>
-        where TOperationEvent :OperationEvent
+    public class OperationEvents : IOperationEvents
     {
-        readonly List<TOperationEvent> events = new List<TOperationEvent>();
+        readonly List<OperationEvent> events = new List<OperationEvent>();
 
         public OperationEvents()
         {
 
         }
-        public OperationEvents(IEnumerable<TOperationEvent> events)
+        public OperationEvents(IEnumerable<OperationEvent> events)
         {
             this.events.AddRange(events);
         }
 
-        public void Append(IEnumerable<TOperationEvent> events)
+        public void Append(IEnumerable<OperationEvent> events)
         {
             this.events.AddRange(events);
         }
 
-        public void Append(params TOperationEvent[] events)
+        public void Append(params OperationEvent[] events)
         {
             this.events.AddRange(events);
         }
 
-        public void Add(TOperationEvent @event)
+        public void Add(OperationEvent @event)
         {
             @event.Handle();
             this.events.Add(@event);
         }
 
-        public void Throw(TOperationEvent @event)
+        public void Throw(OperationEvent @event)
         {
             @event.Throw();
             this.events.Add(@event);
         }
 
-        public IEnumerator<TOperationEvent> GetEnumerator()
+        public IEnumerator<OperationEvent> GetEnumerator()
         {
             return this.events.GetEnumerator();
         }
@@ -55,12 +54,12 @@ namespace DomainObjects.Operations
 
         public void Add(Exception exception)
         {
-            Add(ExceptionErrorBuilder<TOperationEvent>.Build(exception));
+            Add(ExceptionErrorBuilder.Build(exception));
         }
 
         public void Throw(Exception exception)
         {
-            Throw(ExceptionErrorBuilder<TOperationEvent>.Build(exception));
+            Throw(ExceptionErrorBuilder.Build(exception));
         }
 
         public bool HasUnhandledErrors

@@ -26,7 +26,7 @@ namespace ConsoleApp1
         }
     }
 
-    interface IMyCommandOperation<Tin> : ICommandOperationWithInput<Tin, MyOperationEvent>
+    interface IMyCommandOperation<Tin> : ICommandOperationWithInput<Tin>
     {
 
     }
@@ -60,13 +60,12 @@ namespace ConsoleApp1
                 return new Input(x, y);
             }
         }
-        IQueryOperationWithInput<(int x, int y), MyOperationEvent, int> os;
-        IQueryOperationWithInput<(int x, int y), MyOperationEvent, int> GetOS()
+        IQueryOperationWithInput<(int x, int y), int> os;
+        IQueryOperationWithInput<(int x, int y), int> GetOS()
         {
             LazyInitializer.EnsureInitialized(ref os, () =>
             new OperationStackBuilder()
                 .WithInput<(int x, int y)>()
-                .WithEvent<MyOperationEvent>()
                 .Build()
                 .ThenReturn(op => op.Return(2)));
 
@@ -74,13 +73,12 @@ namespace ConsoleApp1
         }
 
 
-        IQueryOperationWithInput<Input, MyOperationEvent, int> os2;
-        IQueryOperationWithInput<Input, MyOperationEvent, int> GetOS2()
+        IQueryOperationWithInput<Input, int> os2;
+        IQueryOperationWithInput<Input, int> GetOS2()
         {
             LazyInitializer.EnsureInitialized(ref os2, () =>
             new OperationStackBuilder()
                 .WithInput<Input>()
-                .WithEvent<MyOperationEvent>()
                 .Build()
                 .Then(op =>
                 {

@@ -6,37 +6,37 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal class StackBlocks<TInput, TState, TOperationEvent> //: List<StackBlockSpecBase<TInput,TState, TOperationEvent>>
-        where TOperationEvent : OperationEvent
+
+    internal class StackBlocks
     {
-        private readonly List<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks = new List<StackBlockSpecBase<TInput, TState, TOperationEvent>>();
-        private Dictionary<string, StackBlockSpecBase<TInput, TState, TOperationEvent>> blockDictionaryByTag;
+        private readonly List<IStackBlockSpec> blocks = new List<IStackBlockSpec>();
+        private Dictionary<string, IStackBlockSpec> blockDictionaryByTag;
 
         public StackBlocks()
         {
-            
+
         }
-        public StackBlocks(IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks)
+        public StackBlocks(IEnumerable<IStackBlockSpec> blocks)
         {
             this.blocks = blocks.ToList();
         }
 
-        public StackBlocks(List<StackBlockSpecBase<TInput, TState, TOperationEvent>> blocks)
+        public StackBlocks(List<IStackBlockSpec> blocks)
         {
             this.blocks = blocks;
         }
 
-        public void Add(StackBlockSpecBase<TInput, TState, TOperationEvent> block) => blocks.Add(block);
+        public void Add(IStackBlockSpec block) => blocks.Add(block);
         public int Count => blocks.Count;
 
-        public IEnumerable<StackBlockSpecBase<TInput, TState, TOperationEvent>> Concat(StackBlockSpecBase<TInput, TState, TOperationEvent> block) 
+        public IEnumerable<IStackBlockSpec> Concat(IStackBlockSpec block)
             => blocks.Concat(new[] { block });
-        
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> GetFirst() => blocks.FirstOrDefault();
-        
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> GetByTag(string tag)
+        public IStackBlockSpec GetFirst() => blocks.FirstOrDefault();
+
+
+        public IStackBlockSpec GetByTag(string tag)
         {
             if (blockDictionaryByTag == null) blockDictionaryByTag = blocks.ToDictionary(x => x.Tag);
 
@@ -45,7 +45,7 @@ namespace DomainObjects.Operations
             return block;
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> GetByIndex(int index)
+        public IStackBlockSpec GetByIndex(int index)
         {
             if (index >= 0 && index < blocks.Count)
                 return blocks[index];
@@ -53,7 +53,7 @@ namespace DomainObjects.Operations
                 throw new OperationStackExecutionException("Block with index " + index + " not found");
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> GetByTagOrIndex(string tag, int index)
+        public IStackBlockSpec GetByTagOrIndex(string tag, int index)
         {
             if (!string.IsNullOrEmpty(tag))
                 return GetByTag(tag);
@@ -61,7 +61,7 @@ namespace DomainObjects.Operations
                 return GetByIndex(index);
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> GetNext(int currentIndex)
+        public IStackBlockSpec GetNext(int currentIndex)
         {
             var next = currentIndex + 1;
             if (next >= blocks.Count)
@@ -69,7 +69,7 @@ namespace DomainObjects.Operations
             return blocks[next];
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> SkipBy(int currentIndex, int skip)
+        public IStackBlockSpec SkipBy(int currentIndex, int skip)
         {
             var next = currentIndex + 1 + skip;
             if (next >= blocks.Count)
@@ -77,7 +77,7 @@ namespace DomainObjects.Operations
             return blocks[next];
         }
 
-        public StackBlockSpecBase<TInput, TState, TOperationEvent> GotoEnd(int currentIndex)
+        public IStackBlockSpec GotoEnd(int currentIndex)
         {
             if (currentIndex == blocks.Count - 1)
                 return null;
@@ -86,8 +86,8 @@ namespace DomainObjects.Operations
         }
 
         private bool ContainsFinallyBlock() => blocks.Any(x => x.BlockType == BlockSpecTypes.Finally);
-        
-        public void AssertAddBlock(StackBlockSpecBase<TInput, TState, TOperationEvent> block)
+
+        public void AssertAddBlock(IStackBlockSpec block)
         {
             if (ContainsFinallyBlock())
                 throw new OperationStackDeclarationException("No block can be added after a Finally block");

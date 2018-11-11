@@ -1,6 +1,6 @@
 ﻿namespace DomainObjects.Operations
 {
-    internal enum BlockFlowTarget
+    public enum BlockFlowTarget
     {
         Return,
         Complete,
@@ -12,7 +12,7 @@
         Retry,
     }
 
-    internal class BlockResultTarget
+    public class BlockResultTarget
     {
         public BlockFlowTarget FlowTarget { get; set; }
         public string TargetTag { get; set; }

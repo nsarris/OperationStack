@@ -3,25 +3,24 @@ using System.Linq;
 
 namespace DomainObjects.Operations
 {
-    public class BlockTraceResult<TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public class BlockTraceResult
     {
         public string Tag { get; private set; }
         public IEmptyable Result { get; private set; }
         public IEmptyable Input { get; private set; }
-        public IEnumerable<TOperationEvent> Events { get; private set; }
+        public IEnumerable<OperationEvent> Events { get; private set; }
         public ExecutionTime Time { get; private set; }
 
-        public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace { get; private set; }
-        public IEnumerable<TOperationEvent> FlattenedEvents => Events.Concat(InnerStackTrace.SelectMany(x => x.FlattenedEvents));
+        public IEnumerable<BlockTraceResult> InnerStackTrace { get; private set; }
+        public IEnumerable<OperationEvent> FlattenedEvents => Events.Concat(InnerStackTrace.SelectMany(x => x.FlattenedEvents));
         
-        internal BlockTraceResult(StackBlockBase<TOperationEvent> stackBlock, IBlockResult blockResult)
+        internal BlockTraceResult(IStackBlock stackBlock, IBlockResult blockResult)
         {
             Tag = stackBlock.Tag;
             Input = stackBlock.Input;
             Result = blockResult.Result;
-            InnerStackTrace = stackBlock.InnerStackTrace ?? Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
-            Events = stackBlock.Events.ToList();
+            InnerStackTrace = stackBlock.InnerStackTrace ?? Enumerable.Empty<BlockTraceResult>();
+            Events = stackBlock.StackEvents.ToList();
 
             if (blockResult.ExecutionTime == null)
                 Time = new ExecutionTime();
@@ -29,12 +28,12 @@ namespace DomainObjects.Operations
                 Time = blockResult.ExecutionTime;
         }
 
-        internal BlockTraceResult(string tag, TOperationEvent error, IEmptyable input)
+        internal BlockTraceResult(string tag, OperationEvent error, IEmptyable input)
         {
             Tag = tag;
             Events = new[] { error };
             Input = input;
-            InnerStackTrace = Enumerable.Empty<BlockTraceResult<TOperationEvent>>();
+            InnerStackTrace = Enumerable.Empty<BlockTraceResult>();
             Time = new ExecutionTime();
         }
     }

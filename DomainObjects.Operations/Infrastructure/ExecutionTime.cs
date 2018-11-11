@@ -10,9 +10,9 @@ namespace DomainObjects.Operations
     public class ExecutionTime
     {
         public bool Timed { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public TimeSpan Elapsed { get; set; }
+        public DateTime StartTime { get; private set; }
+        public DateTime EndTime { get; private set; }
+        public TimeSpan Elapsed { get; private set; } = TimeSpan.Zero;
         public long ElapsedMilliseconds => Convert.ToInt64(Elapsed.TotalMilliseconds);
 
         public ExecutionTime()

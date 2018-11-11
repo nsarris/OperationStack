@@ -7,145 +7,124 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-
-    public interface IStackBlock<TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IStackBlock
     {
-        IStackEvents<TOperationEvent> StackEvents { get; }
-        void Throw(TOperationEvent error);
         string Tag { get; }
+        IBlockResult Execute(bool timeMeasurment);
+        Task<IBlockResult> ExecuteAsync(bool timeMeasurment);
+        IEmptyable Input { get; }
+        object StackState { get; }
+        IStackEvents StackEvents { get; }
+        void Throw(OperationEvent error);
+        IOperationEvents Events { get; }
+        IEnumerable<BlockTraceResult> InnerStackTrace { get; }
     }
 
-    public interface IStackBlock<TInput, TState, TOperationEvent> : IStackBlock<TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IStackBlock<TInput, TState> : IStackBlock
     {
-        TState StackState { get; set; }
+        new TState StackState { get; set; }
         TInput StackInput { get; }
     }
 
-    public interface IStackBlock<TInput, TState, TOperationEvent, T> : IStackBlock<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IStackBlock<TInput, TState, T> : IStackBlock<TInput, TState>
     {
-        Emptyable<T> Input { get; }
+        new Emptyable<T> Input { get; }
     }
 
-    public interface IOperationBlock<TInput, TState, TOperationEvent> : IStackBlock<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IOperationBlock<TInput, TState> : IStackBlock<TInput, TState>
     {
-        IOperationEvents<TOperationEvent> Events { get; }
-        void Append(IOperationResult<TOperationEvent> res);
+        void Append(IOperationResult res);
     }
 
-    public interface IOperationBlock<TInput, TState, TOperationEvent, Tin> : IOperationBlock<TInput, TState, TOperationEvent>, IStackBlock<TInput, TState, TOperationEvent,Tin>
-        where TOperationEvent : OperationEvent
+    public interface IOperationBlock<TInput, TState, Tin> : IOperationBlock<TInput, TState>, IStackBlock<TInput, TState,Tin>
     {
 
     }
 
-    public interface IQuery<TInput, TState, TOperationEvent> : IOperationBlock<TInput, TState, TOperationEvent>, IResultDispatcher<TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IQuery<TInput, TState> : IOperationBlock<TInput, TState>, IResultDispatcher<TState>
     {
-        IQueryResultProxy<T,TState, TOperationEvent> DefineResult<T>();
-        IQueryResultProxy<T, TState, TOperationEvent> DefineResult<T>(T result);
-        IQueryResultProxy<T, TState, TOperationEvent> DefineResult<T>(Expression<Func<T>> expression);
+        IQueryResultProxy<T,TState> DefineResult<T>();
+        IQueryResultProxy<T, TState> DefineResult<T>(T result);
+        IQueryResultProxy<T, TState> DefineResult<T>(Expression<Func<T>> expression);
     }
 
-    public interface ICommand<TInput, TState, TOperationEvent> : IOperationBlock<TInput, TState, TOperationEvent>, IResultVoidDispatcher<TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface ICommand<TInput, TState> : IOperationBlock<TInput, TState>, IResultVoidDispatcher<TState>
     {
 
 
     }
 
-
-
-
-    
-
-    public interface ICommand<TInput, TState, TOperationEvent, T> : ICommand<TInput, TState, TOperationEvent>, IOperationBlock<TInput, TState, TOperationEvent, T>
-        where TOperationEvent : OperationEvent
+    public interface ICommand<TInput, TState, T> : ICommand<TInput, TState>, IOperationBlock<TInput, TState, T>
     {
 
     }
 
-    public interface IQuery<TInput, TState, TOperationEvent, T> : IQuery<TInput, TState, TOperationEvent>, IOperationBlock<TInput, TState, TOperationEvent, T>
-        where TOperationEvent : OperationEvent
+    public interface IQuery<TInput, TState, T> : IQuery<TInput, TState>, IOperationBlock<TInput, TState, T>
     {
 
     }
 
-
-
-    public interface ITypedQuery<TInput, TState, TOperationEvent, T> : IOperationBlock<TInput, TState, TOperationEvent>, IResultDispatcher<TState, TOperationEvent>, IResultDispatcher<T,TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface ITypedQuery<TInput, TState, T> : IOperationBlock<TInput, TState>, IResultDispatcher<TState>, IResultDispatcher<T,TState>
     {
 
     }
 
-    public interface ITypedQuery<TInput, TState, TOperationEvent, Tin, Tout> : ITypedQuery<TInput, TState, TOperationEvent, Tout>, IOperationBlock<TInput, TState, TOperationEvent, Tin>
-        where TOperationEvent : OperationEvent
+    public interface ITypedQuery<TInput, TState, Tin, Tout> : ITypedQuery<TInput, TState, Tout>, IOperationBlock<TInput, TState, Tin>
     {
 
     }
 
-
-
-    public interface IEventHandler<TInput, TState, TOperationEvent> : IStackBlock<TInput, TState, TOperationEvent>, IResultVoidDispatcher<TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IEventHandler<TInput, TState> : IStackBlock<TInput, TState>, IResultVoidDispatcher<TState>
     {
 
     }
 
-    public interface IEventHandlerWithInput<TInput, TState, TOperationEvent, T> : IStackBlock<TInput, TState, TOperationEvent, T>, IResultDispatcher<T,TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IEventHandlerWithInput<TInput, TState, T> : IStackBlock<TInput, TState, T>, IResultDispatcher<T,TState>
     {
         Emptyable<T> Result { get; }
         BlockResult<T> Return();
     }
 
-   
 
-
-    public interface IEventsHandler<TEvent, TInput, TState, TOperationEvent> : IEventHandler<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
-        where TEvent : TOperationEvent
+    public interface IEventsHandler<TEvent, TInput, TState> : IEventHandler<TInput, TState>
+        where TEvent : OperationEvent
     {
-        IEnumerable<TEvent> Events { get; }
+        new IEnumerable<TEvent> Events { get; }
     }
 
-    public interface IEventsHandler<TEvent, TInput, TState, TOperationEvent, Tin> : IEventHandlerWithInput<TInput, TState, TOperationEvent, Tin>
-        where TOperationEvent : OperationEvent
-        where TEvent : TOperationEvent
+    public interface IEventsHandler<TEvent, TInput, TState, Tin> : IEventHandlerWithInput<TInput, TState, Tin>
+        where TEvent : OperationEvent
     {
-        IEnumerable<TEvent> Events { get; }
+        new IEnumerable<TEvent> Events { get; }
     }
 
-    public interface IErrorsHandler<TError, TInput, TState, TOperationEvent> : IEventHandler<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
-        where TError : TOperationEvent
+    public interface IErrorsHandler<TInput, TState> : IEventHandler<TInput, TState>
+    {
+        IEnumerable<OperationEvent> Errors { get; }
+    }
+
+    public interface IErrorsHandler<TError, TInput, TState> : IErrorsHandler<TInput, TState>
+        where TError : OperationEvent
+    {
+        new IEnumerable<TError> Errors { get; }
+    }
+
+    public interface IErrorsHandler<TError, TInput, TState, Tin> : IEventHandlerWithInput<TInput,TState, Tin>
+        where TError : OperationEvent
     {
         IEnumerable<TError> Errors { get; }
     }
 
-    public interface IErrorsHandler<TError, TInput, TState, TOperationEvent, Tin> : IEventHandlerWithInput<TInput,TState, TOperationEvent, Tin>
-        where TOperationEvent : OperationEvent
-        where TError : TOperationEvent
-    {
-        IEnumerable<TError> Errors { get; }
-    }
-
-    public interface IExceptionsErrorHandler<TError,TException, TInput, TState, TOperationEvent> : IEventHandler<TInput,TState, TOperationEvent>
+    public interface IExceptionsErrorHandler<TError,TException, TInput, TState> : IEventHandler<TInput,TState>
         where TException : Exception
-        where TOperationEvent : OperationEvent
-        where TError : TOperationEvent
+        where TError : OperationEvent
     {
         IEnumerable<IOperationExceptionError<TError, TException>> ExceptionErrors { get; }
     }
 
-    public interface IExceptionsErrorHandler<TError, TException, TInput, TState, TOperationEvent, Tin> : IEventHandlerWithInput<TInput, TState, TOperationEvent, Tin>
+    public interface IExceptionsErrorHandler<TError, TException, TInput, TState, Tin> : IEventHandlerWithInput<TInput, TState, Tin>
         where TException : Exception
-        where TOperationEvent : OperationEvent
-        where TError : TOperationEvent
+        where TError : OperationEvent
     {
         IEnumerable<IOperationExceptionError<TError, TException>> ExceptionErrors { get; }
     }

@@ -6,163 +6,158 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    internal abstract class StackBlockBase<TOperationEvent> : IStackBlock<TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public partial class OperationStack<TInput, TState, TOutput>
     {
-        public string Tag { get; private set; }
-
-        public IStackEvents<TOperationEvent> StackEvents { get; set; }
-        public IOperationEvents<TOperationEvent> Events { get; private set; } = new OperationEvents<TOperationEvent>();
-        public IEnumerable<TOperationEvent> FlattenedEvents => Events.Concat(innerStackTrace.SelectMany(x => x.FlattenedEvents));
-        public bool IsEmptyEventBlock { get; protected set; }
-        public bool IsAsync => executorAsync != null;
-        public IEnumerable<BlockTraceResult<TOperationEvent>> InnerStackTrace => innerStackTrace.AsEnumerable();
-        internal virtual IEmptyable Input { get; set; } = Emptyable.Empty;
-
-        readonly List<BlockTraceResult<TOperationEvent>> innerStackTrace = new List<BlockTraceResult<TOperationEvent>>();
-
-        protected StackBlockBase(string tag, IStackEvents<TOperationEvent> stackEvents)
+        internal abstract class StackBlockBase : IStackBlock<TInput, TState>
         {
-            Tag = tag;
-            StackEvents = stackEvents;
-        }
+            public string Tag { get; private set; }
 
-        protected Func<IBlockResult> executor;
-        protected Func<Task<IBlockResult>> executorAsync;
+            public IStackEvents StackEvents { get; set; }
+            public IOperationEvents Events { get; private set; } = new OperationEvents();
+            public IEnumerable<OperationEvent> FlattenedEvents => Events.Concat(innerStackTrace.SelectMany(x => x.FlattenedEvents));
+            public bool IsEmptyEventBlock { get; protected set; }
+            public bool IsAsync => executorAsync != null;
+            public TInput StackInput { get; private set; }
+            public TState StackState { get; set; }
 
-        public void Append(IOperationResult<TOperationEvent> result)
-        {
-            //this.Events.Append(result.Events);
-            innerStackTrace.AddRange(result.StackTrace);
-        }
+            public IEnumerable<BlockTraceResult> InnerStackTrace => innerStackTrace.AsEnumerable();
+            public IEmptyable Input { get; set; } = Emptyable.Empty;
 
-        public void Throw(TOperationEvent error)
-        {
-            this.Events.Throw(error);
-        }
+            object IStackBlock.StackState => StackState;
 
-        internal IBlockResult Execute(bool measureTime = true)
-        {
-            if (IsEmptyEventBlock)
-                return new BlockResultVoid()
-                {
-                    Target = new BlockResultTarget
-                    {
-                        FlowTarget = BlockFlowTarget.Return,
-                        OverrideInput = Input
-                    },
-                };
+            readonly List<BlockTraceResult> innerStackTrace = new List<BlockTraceResult>();
 
-            System.Diagnostics.Stopwatch sw = null;
-            if (measureTime)
+            protected StackBlockBase(string tag, TInput input, TState state, IStackEvents stackEvents)
             {
-                sw = new System.Diagnostics.Stopwatch();
-                sw.Start();
+                Tag = tag;
+                StackEvents = stackEvents;
+                StackState = state;
+                StackInput = input;
             }
 
-            try
+            protected Func<IBlockResult> executor;
+            protected Func<Task<IBlockResult>> executorAsync;
+
+            public void Append(IOperationResult result)
             {
-                var result = IsAsync ? AsyncHelper.RunSync(executorAsync) : executor();
-                if (measureTime)
+                //this.Events.Append(result.Events);
+                innerStackTrace.AddRange(result.StackTrace);
+            }
+
+            public void Throw(OperationEvent error)
+            {
+                this.Events.Throw(error);
+            }
+
+            public IBlockResult Execute(bool timeMeasurment)
+            {
+                if (IsEmptyEventBlock)
+                    return new BlockResultVoid()
+                    {
+                        Target = new BlockResultTarget
+                        {
+                            FlowTarget = BlockFlowTarget.Return,
+                            OverrideInput = Input
+                        },
+                    };
+
+                System.Diagnostics.Stopwatch sw = null;
+                if (timeMeasurment)
                 {
-                    sw.Stop();
-                    result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                    sw = new System.Diagnostics.Stopwatch();
+                    sw.Start();
                 }
-                return result;
-            }
-            catch (Exception e)
-            {
-                this.Events.Throw(e);
-                var result = new BlockResultVoid()
-                {
-                    Target = new BlockResultTarget
-                    {
-                        FlowTarget = BlockFlowTarget.Return
-                    },
-                };
-                if (measureTime)
-                    result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
 
-                return result;
-            }
-        }
-
-        internal async Task<IBlockResult> ExecuteAsync(bool measureTime = true)
-        {
-            if (IsEmptyEventBlock)
-                return new BlockResultVoid()
-                {
-                    Target = new BlockResultTarget
-                    {
-                        FlowTarget = BlockFlowTarget.Return,
-                        OverrideInput = Input
-                    },
-                };
-            //Run with configure await false if no stopwatch (context) needed
-            if (!measureTime && IsAsync)
                 try
                 {
-                    return await executorAsync().ConfigureAwait(false);
+                    var result = IsAsync ? AsyncHelper.RunSync(executorAsync) : executor();
+                    if (timeMeasurment)
+                    {
+                        sw.Stop();
+                        result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                    }
+                    return result;
                 }
                 catch (Exception e)
                 {
                     this.Events.Throw(e);
-                    return new BlockResultVoid()
+                    var result = new BlockResultVoid()
                     {
                         Target = new BlockResultTarget
                         {
                             FlowTarget = BlockFlowTarget.Return
                         },
                     };
-                }
+                    if (timeMeasurment)
+                        result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
 
-            //If measure time execute without configure await
-            System.Diagnostics.Stopwatch sw = null;
-            if (measureTime)
-            {
-                sw = new System.Diagnostics.Stopwatch();
-                sw.Start();
+                    return result;
+                }
             }
 
-            try
+            public async Task<IBlockResult> ExecuteAsync(bool timeMeasurment)
             {
-                var result = IsAsync ? await executorAsync() : executor();
-                if (measureTime)
-                {
-                    sw.Stop();
-                    result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
-                }
-                return result;
-            }
-            catch (Exception e)
-            {
-                this.Events.Throw(e);
-                var result = new BlockResultVoid()
-                {
-                    Target = new BlockResultTarget
+                if (IsEmptyEventBlock)
+                    return new BlockResultVoid()
                     {
-                        FlowTarget = BlockFlowTarget.Return
-                    },
-                };
-                if (measureTime)
-                    result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                        Target = new BlockResultTarget
+                        {
+                            FlowTarget = BlockFlowTarget.Return,
+                            OverrideInput = Input
+                        },
+                    };
+                //Run with configure await false if no stopwatch (context) needed
+                if (!timeMeasurment && IsAsync)
+                    try
+                    {
+                        return await executorAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        this.Events.Throw(e);
+                        return new BlockResultVoid()
+                        {
+                            Target = new BlockResultTarget
+                            {
+                                FlowTarget = BlockFlowTarget.Return
+                            },
+                        };
+                    }
 
-                return result;
+                //If measure time execute without configure await
+                System.Diagnostics.Stopwatch sw = null;
+                if (timeMeasurment)
+                {
+                    sw = new System.Diagnostics.Stopwatch();
+                    sw.Start();
+                }
+
+                try
+                {
+                    var result = IsAsync ? await executorAsync() : executor();
+                    if (timeMeasurment)
+                    {
+                        sw.Stop();
+                        result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+                    }
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    this.Events.Throw(e);
+                    var result = new BlockResultVoid()
+                    {
+                        Target = new BlockResultTarget
+                        {
+                            FlowTarget = BlockFlowTarget.Return
+                        },
+                    };
+                    if (timeMeasurment)
+                        result.ExecutionTime = new ExecutionTime(DateTime.Now, sw.Elapsed);
+
+                    return result;
+                }
             }
         }
     }
-
-    internal abstract class StackBlockBase<TInput, TState, TOperationEvent> : StackBlockBase<TOperationEvent>, IStackBlock<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
-    {
-        protected StackBlockBase(string tag, TInput input, TState state, IStackEvents<TOperationEvent> stackEvents)
-            : base(tag, stackEvents)
-        {
-            StackState = state;
-            StackInput = input;
-        }
-        public TInput StackInput { get; private set; }
-        public TState StackState { get; set; }
-    }
-
 }

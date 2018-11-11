@@ -1,6 +1,6 @@
 ﻿namespace DomainObjects.Operations
 {
-    internal interface IBlockResult
+    public interface IBlockResult
     {
         BlockResultTarget Target { get; }
         ExecutionTime ExecutionTime { get; set; }

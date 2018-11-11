@@ -1,44 +1,72 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-
-
-    internal class StackBlockSpecOperation<TInput, TState, TOperationEvent> : StackBlockSpecBase<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public partial class OperationStack<TInput, TState, TOutput>
     {
-        readonly Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
-
-        public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
-            : base(tag, index, blockType)
+        internal class StackBlockSpecOperation<TBlockInput, TBlockOutput> : StackBlockSpecBase<TBlockInput, TBlockOutput>
         {
-            this.blockBuilder = blockBuilder;
-        }
+            public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents, IEmptyable, StackBlockBase> blockBuilder, BlockSpecTypes blockType)
+                : base(tag, index, blockType, blockBuilder)
+            {
+            }
 
-        public override Type InputType => null;
+            public StackBlockSpecOperation(string tag, int index, Func<IOperationBlock<TInput, TState>, ICommandResult> func)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock(tag, stackInput, state, stackEvents, func);
+            }
 
-        internal override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-        {
-            return blockBuilder(stackInput, state, stackEvents, input);
-        }
-    }
+            public StackBlockSpecOperation(string tag, int index, Func<IOperationBlock<TInput, TState>, Task<ICommandResult>> asyncFunc)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock(tag, stackInput, state, stackEvents, asyncFunc);
+            }
 
-    internal class StackBlockSpecOperation<TInput, TState, TOperationEvent, Tin> : StackBlockSpecBase<TInput, TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
-    {
-        readonly Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder;
+            public StackBlockSpecOperation(string tag, int index, Func<ICommand<TInput, TState, TBlockInput>, BlockResultVoid> func)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock<TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func);
+            }
 
-        public StackBlockSpecOperation(string tag, int index, Func<TInput, TState, IStackEvents<TOperationEvent>, IEmptyable, StackBlockBase<TInput, TState, TOperationEvent>> blockBuilder, BlockSpecTypes blockType)
-            : base(tag, index, blockType)
-        {
-            this.blockBuilder = blockBuilder;
-        }
+            public StackBlockSpecOperation(string tag, int index, Action<ICommand<TInput, TState, TBlockInput>> action)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock<TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), action);
+            }
 
-        public override Type InputType => typeof(Tin);
+            public StackBlockSpecOperation(string tag, int index, Func<ICommand<TInput, TState, TBlockInput>, Task<BlockResultVoid>> asyncFunc)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock<TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncFunc);
+            }
 
-        internal override StackBlockBase<TInput, TState, TOperationEvent> CreateBlock(TInput stackInput, TState state, IStackEvents<TOperationEvent> stackEvents, IEmptyable input)
-        {
-            return blockBuilder(stackInput, state, stackEvents, input);
+            public StackBlockSpecOperation(string tag, int index, Func<ICommand<TInput, TState, TBlockInput>, Task> asyncAction)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock<TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), asyncAction);
+            }
+
+            public StackBlockSpecOperation(string tag, int index, Func<IOperationBlock<TInput, TState, TBlockInput>, ICommandResult> func)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock<TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), func);
+            }
+
+            public StackBlockSpecOperation(string tag, int index, ICommandOperation operation)
+                : base(tag, index, BlockSpecTypes.Operation, null)
+            {
+                blockBuilder = (TInput stackInput, TState state, IStackEvents stackEvents, IEmptyable input)
+                    => new CommandBlock<TBlockInput>(tag, stackInput, state, stackEvents, input.ConvertTo<TBlockInput>(), operation);
+            }
         }
     }
 }

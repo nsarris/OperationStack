@@ -1,7 +1,7 @@
 ﻿namespace DomainObjects.Operations
 {
-    internal class ResultVoidDispatcher<TState, TOperationEvent> : IResultVoidDispatcher<TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    internal class ResultVoidDispatcher<TState> : IResultVoidDispatcher<TState>
+        
     {
         public BlockResultVoid Fail()
         {
@@ -14,7 +14,7 @@
             };
         }
 
-        public BlockResultVoid Fail(TOperationEvent error)
+        public BlockResultVoid Fail(OperationEvent error)
         {
             return new BlockResultVoid
             {

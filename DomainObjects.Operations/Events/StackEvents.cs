@@ -7,27 +7,27 @@ using System.Threading.Tasks;
 
 namespace DomainObjects.Operations
 {
-    public class StackEvents<TOperationEvent> : IStackEvents<TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public class StackEvents : IStackEvents
+        
     {
-        private readonly List<TOperationEvent> events = new List<TOperationEvent>();
+        private readonly List<OperationEvent> events = new List<OperationEvent>();
         public StackEvents()
         {
 
         }
 
-        public StackEvents(IEnumerable<TOperationEvent> events)
+        public StackEvents(IEnumerable<OperationEvent> events)
         {
             this.events = events.ToList();
         }
 
-        internal void AddRange(IEnumerable<TOperationEvent> events)
+        internal void AddRange(IEnumerable<OperationEvent> events)
         {
             this.events.AddRange(events);
         }
 
         public IEnumerable<TEvent> Filter<TEvent>(Func<TEvent, bool> filter = null) 
-            where TEvent : TOperationEvent
+            where TEvent : OperationEvent
         {
             var filteredEvents = this.OfType<TEvent>();
             if (filter != null)
@@ -36,7 +36,7 @@ namespace DomainObjects.Operations
         }
 
         public IEnumerable<TEvent> FilterErrors<TEvent>(bool? handled, Func<TEvent, bool> filter = null)
-            where TEvent : TOperationEvent
+            where TEvent : OperationEvent
         {
             var filteredEvents = this.OfType<TEvent>().Where(x => !x.IsSwallowed && (handled == null || x.IsHandled == handled));
             if (filter != null)
@@ -48,7 +48,7 @@ namespace DomainObjects.Operations
 
         public IEnumerable<IOperationExceptionError<TEvent, TException>> FilterExceptions<TEvent,TException>(bool? handled, Func<IOperationExceptionError<TEvent, TException>, bool> filter = null) 
             where TException : Exception 
-            where TEvent : TOperationEvent
+            where TEvent : OperationEvent
         {
             var filteredEvents = this.OfType<TEvent>()
                 .Where(x => x.Exception is TException && !x.IsSwallowed && (handled == null || x.IsHandled == handled))
@@ -60,7 +60,7 @@ namespace DomainObjects.Operations
             return r;
         }
 
-        public IEnumerator<TOperationEvent> GetEnumerator()
+        public IEnumerator<OperationEvent> GetEnumerator()
         {
             return events.GetEnumerator();
         }

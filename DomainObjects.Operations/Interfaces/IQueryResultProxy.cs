@@ -1,7 +1,6 @@
 ﻿namespace DomainObjects.Operations
 {
-    public interface IQueryResultProxy<T,TState, TOperationEvent> : IResultDispatcher<T,TState, TOperationEvent>
-        where TOperationEvent : OperationEvent
+    public interface IQueryResultProxy<T,TState> : IResultDispatcher<T,TState>
     {
         T Result { get; set; }
     }
